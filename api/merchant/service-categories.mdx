@@ -1,0 +1,252 @@
+---
+title: Service Categories
+description: Organize your services into categories for better customer navigation
+---
+
+## Overview
+
+Service categories help organize your services into logical groups, making it easier for customers to browse and find the services they need. Categories can be reordered to control how they appear in your service catalog.
+
+## Endpoints
+
+### Create Service Category
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.reservations.com/api/v1/merchant/service-categories \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Hair Services"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchant/service-categories', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'Hair Services'
+  })
+});
+```
+
+```python Python
+response = requests.post(
+    'https://api.reservations.com/api/v1/merchant/service-categories',
+    headers={
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    },
+    json={'name': 'Hair Services'}
+)
+```
+</CodeGroup>
+
+#### Request Body
+
+<ParamField path="name" type="string" required>
+  Name of the service category
+</ParamField>
+
+#### Response
+
+Returns `200 OK` on success with no body.
+
+---
+
+### Update Service Category
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.reservations.com/api/v1/merchant/service-categories/5 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Hair & Styling Services"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchant/service-categories/5', {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'Hair & Styling Services'
+  })
+});
+```
+</CodeGroup>
+
+#### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the service category to update
+</ParamField>
+
+#### Request Body
+
+<ParamField path="name" type="string" required>
+  Updated name for the category
+</ParamField>
+
+#### Response
+
+Returns `200 OK` on success with no body.
+
+---
+
+### Delete Service Category
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.reservations.com/api/v1/merchant/service-categories/5 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchant/service-categories/5', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`
+  }
+});
+```
+</CodeGroup>
+
+#### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the service category to delete
+</ParamField>
+
+#### Response
+
+Returns `200 OK` on success with no body.
+
+<Warning>
+  Services in a deleted category are not deleted. They become uncategorized and can be reassigned to another category.
+</Warning>
+
+---
+
+### Reorder Service Categories
+
+Reorder multiple categories to control their display sequence.
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.reservations.com/api/v1/merchant/service-categories/reorder \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "categories": [3, 1, 2, 5]
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchant/service-categories/reorder', {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    categories: [3, 1, 2, 5]
+  })
+});
+```
+
+```python Python
+response = requests.put(
+    'https://api.reservations.com/api/v1/merchant/service-categories/reorder',
+    headers={
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    },
+    json={'categories': [3, 1, 2, 5]}
+)
+```
+</CodeGroup>
+
+#### Request Body
+
+<ParamField path="categories" type="integer[]" required>
+  Array of category IDs in the desired display order
+</ParamField>
+
+#### Response
+
+Returns `200 OK` on success with no body.
+
+<Note>
+  The order of IDs in the array determines the display sequence. The first ID will appear first, the second ID will appear second, and so on.
+</Note>
+
+## Common Use Cases
+
+### Setting Up Initial Categories
+
+When onboarding a new merchant, create logical category groupings:
+
+```javascript
+const categories = ['Hair Services', 'Nail Services', 'Spa Treatments', 'Massages'];
+
+for (const categoryName of categories) {
+  await fetch('/api/v1/merchant/service-categories', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name: categoryName })
+  });
+}
+```
+
+### Reorganizing Category Order
+
+Adjust the category display order based on popularity or seasonality:
+
+```javascript
+// Put most popular categories first
+const newOrder = [
+  15, // Summer Specials
+  3,  // Hair Services
+  7,  // Nail Services
+  2   // Spa Treatments
+];
+
+await fetch('/api/v1/merchant/service-categories/reorder', {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ categories: newOrder })
+});
+```
+
+## Integration with Services
+
+Service categories are used when:
+
+- Creating or updating services (set the `category_id` field)
+- Displaying services to customers (services are grouped by category)
+- Filtering services in the merchant dashboard
+
+See the [Services API](/api/merchant/services) for more information on assigning services to categories.
+
+## Best Practices
+
+- **Use clear, customer-friendly names**: Categories should be immediately understandable to customers
+- **Keep categories broad**: Avoid creating too many narrow categories that confuse navigation
+- **Logical grouping**: Group related services together (e.g., all hair-related services in one category)
+- **Seasonal adjustments**: Use reordering to highlight seasonal or promotional service categories
+- **Consistent naming**: Use a consistent naming pattern across all categories

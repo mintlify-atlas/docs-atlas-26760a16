@@ -1,0 +1,260 @@
+---
+title: Pricing & Subscription Plans
+description: Understand the subscription tiers and features available in the Reservations platform
+---
+
+## Overview
+
+Reservations offers three subscription tiers designed to meet the needs of businesses at different stages of growth. Each tier provides increasing levels of features, capacity, and support.
+
+## Available Tiers
+
+<CardGroup cols={3}>
+  <Card title="Free" icon="gift">
+    Perfect for getting started and testing the platform
+  </Card>
+  
+  <Card title="Pro" icon="rocket">
+    Ideal for growing businesses with regular bookings
+  </Card>
+  
+  <Card title="Enterprise" icon="building">
+    Comprehensive solution for large organizations
+  </Card>
+</CardGroup>
+
+## Plan Features
+
+### Free Tier
+
+The Free tier provides essential booking functionality to help you get started:
+
+**Core Features**
+- Basic booking management
+- Single location support
+- Customer database
+- Email notifications
+- Calendar view
+- Basic analytics
+
+**Limitations**
+- Limited monthly bookings
+- Single team member
+- Standard support
+- Basic integrations
+
+**Best For**
+- Solo practitioners
+- Testing the platform
+- Small businesses just starting out
+- Proof of concept deployments
+
+---
+
+### Pro Tier
+
+The Pro tier adds advanced features and higher limits for growing businesses:
+
+**Everything in Free, plus:**
+- Unlimited bookings
+- Multiple locations
+- Unlimited team members
+- Advanced scheduling features
+- Recurring bookings
+- Group class management
+- Product inventory tracking
+- External calendar integration (Google Calendar)
+- Priority email support
+- Revenue analytics and reporting
+- Custom branding options
+- Multi-currency support
+
+**Limitations**
+- Standard integration options
+- Email-only priority support
+
+**Best For**
+- Growing service businesses
+- Multi-location operations
+- Businesses with multiple staff members
+- Organizations requiring advanced scheduling
+
+---
+
+### Enterprise Tier
+
+The Enterprise tier provides the full platform with premium support and customization:
+
+**Everything in Pro, plus:**
+- Dedicated account manager
+- Premium support (phone, email, chat)
+- Custom integrations
+- Advanced API access
+- Custom feature development
+- SLA guarantees
+- Training and onboarding assistance
+- Data export and migration tools
+- White-label options (if configured)
+
+**Best For**
+- Large organizations
+- Multi-brand businesses
+- Franchises
+- Businesses requiring dedicated support
+- Organizations with custom integration needs
+
+## Subscription Management
+
+### Checking Your Current Plan
+
+Merchants can view their current subscription tier through the platform. The tier information is stored in the merchant settings and affects available features and limits.
+
+### Plan-Based Feature Restrictions
+
+The platform enforces plan-based restrictions through the subscription tier system:
+
+```go
+// From backend/internal/types/subscription.go
+type SubTier struct {
+    tier string
+}
+
+var (
+    SubTierFree       = SubTier{"free"}
+    SubTierPro        = SubTier{"pro"}
+    SubTierEnterprise = SubTier{"enterprise"}
+)
+```
+
+Features are conditionally enabled based on the merchant's current tier:
+
+- **Booking limits**: Free tier may have monthly booking caps
+- **Team size**: Free tier limited to single user
+- **Locations**: Multiple locations require Pro or Enterprise
+- **Integrations**: External calendar sync requires Pro or higher
+- **Support level**: Priority support begins at Pro tier
+
+## Technical Implementation
+
+### Tier Detection
+
+Backend services check the merchant's subscription tier to enforce limits:
+
+```go
+// Get merchant subscription tier
+tier, err := merchantRepo.GetMerchantSubscriptionTier(ctx, merchantId)
+if err != nil {
+    return err
+}
+
+// Check if feature is available for this tier
+if tier == types.SubTierFree && featureRequiresPro {
+    return errors.New("This feature requires a Pro or Enterprise subscription")
+}
+```
+
+### Feature Flags
+
+Certain API endpoints and features verify subscription tier before allowing access:
+
+- Creating additional locations
+- Adding team members beyond the limit
+- Enabling external calendar integration
+- Accessing advanced analytics
+- Using custom branding features
+
+## Billing Information
+
+<Note>
+  Specific pricing, billing cycles, and payment processing details would be configured through your billing system integration (e.g., Stripe, PayPal). The platform's subscription tier system provides the technical foundation for enforcing plan-based access control.
+</Note>
+
+## Upgrading or Downgrading
+
+### Upgrade Process
+
+When upgrading to a higher tier:
+
+1. Previous restrictions are immediately lifted
+2. New features become available
+3. Higher limits take effect
+4. Access to additional support channels is granted
+
+### Downgrade Considerations
+
+When downgrading to a lower tier:
+
+1. Data is retained but may become inaccessible
+2. Team members beyond the new limit may need to be removed
+3. Advanced features become unavailable
+4. Existing bookings and customer data remain intact
+
+<Warning>
+  Downgrading may require removing team members, locations, or disabling integrations if they exceed the limits of the lower tier. Plan your downgrade carefully to avoid disruption.
+</Warning>
+
+## Integration with Development
+
+### Environment Configuration
+
+Subscription tiers are managed through the database and accessed via the merchant repository. When developing or testing:
+
+```go
+// Simulating different subscription tiers in development
+merchantRepo.GetMerchantSubscriptionTier(ctx, merchantId)
+// Returns: SubTierFree, SubTierPro, or SubTierEnterprise
+```
+
+### Testing Tier-Restricted Features
+
+During development, you can test tier-specific behavior by:
+
+1. Setting the merchant's subscription tier in the database
+2. Verifying that restricted features properly check the tier
+3. Ensuring appropriate error messages are returned for tier restrictions
+
+## Support Channels by Tier
+
+<Tabs>
+  <Tab title="Free">
+    - Community forums
+    - Email support (standard response time)
+    - Documentation and guides
+    - Self-service knowledge base
+  </Tab>
+  
+  <Tab title="Pro">
+    - Priority email support
+    - Faster response times
+    - Video tutorials
+    - Onboarding guidance
+  </Tab>
+  
+  <Tab title="Enterprise">
+    - Dedicated account manager
+    - Phone support
+    - Live chat support
+    - Custom training sessions
+    - SLA-backed response times
+  </Tab>
+</Tabs>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Merchant Dashboard" icon="chart-line" href="/features/merchant-dashboard">
+    Explore analytics and metrics available in each tier
+  </Card>
+  
+  <Card title="Integrations" icon="plug" href="/features/integrations">
+    Learn about tier-specific integration options
+  </Card>
+  
+  <Card title="Team Management" icon="users" href="/api/merchant/team">
+    Understand team member limits by tier
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/overview">
+    View API access levels for each tier
+  </Card>
+</CardGroup>

@@ -1,0 +1,409 @@
+---
+title: Public Merchant API
+description: Public endpoints for customer-facing merchant discovery and booking flows
+---
+
+## Overview
+
+The Public Merchant API provides unauthenticated endpoints that power the customer-facing booking interface (Tango app). These endpoints allow customers to discover merchants, browse services, check availability, and gather information needed for making bookings.
+
+<Info>
+  These endpoints are accessed via the `/api/v1/merchants/{merchantName}` base path and do not require authentication.
+</Info>
+
+## Base Path
+
+```
+GET /api/v1/merchants/{merchantName}
+```
+
+The `{merchantName}` path parameter is the merchant's URL-friendly name (e.g., "joes-barber-shop").
+
+## Endpoints
+
+### Get Merchant Information
+
+Retrieve comprehensive information about a merchant including location, services, and business hours.
+
+<CodeGroup>
+```bash cURL
+curl https://api.reservations.com/api/v1/merchants/joes-barber-shop
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchants/joes-barber-shop');
+const merchantInfo = await response.json();
+```
+
+```python Python
+response = requests.get('https://api.reservations.com/api/v1/merchants/joes-barber-shop')
+merchant_info = response.json()
+```
+</CodeGroup>
+
+#### Response
+
+<ResponseField name="merchant_name" type="string">
+  Display name of the merchant
+</ResponseField>
+
+<ResponseField name="url_name" type="string">
+  URL-friendly merchant identifier
+</ResponseField>
+
+<ResponseField name="contact_email" type="string">
+  Primary contact email
+</ResponseField>
+
+<ResponseField name="introduction" type="string">
+  Short introduction text
+</ResponseField>
+
+<ResponseField name="announcement" type="string">
+  Current announcement or notice
+</ResponseField>
+
+<ResponseField name="about_us" type="string">
+  Detailed about us information
+</ResponseField>
+
+<ResponseField name="parking_info" type="string">
+  Parking instructions
+</ResponseField>
+
+<ResponseField name="payment_info" type="string">
+  Payment methods and policies
+</ResponseField>
+
+<ResponseField name="timezone" type="string">
+  Merchant's timezone (e.g., "America/New_York")
+</ResponseField>
+
+<ResponseField name="location_id" type="integer">
+  Primary location ID
+</ResponseField>
+
+<ResponseField name="country" type="string">
+  Country name
+</ResponseField>
+
+<ResponseField name="city" type="string">
+  City name
+</ResponseField>
+
+<ResponseField name="postal_code" type="string">
+  Postal/ZIP code
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Street address
+</ResponseField>
+
+<ResponseField name="formatted_location" type="string">
+  Full formatted address string
+</ResponseField>
+
+<ResponseField name="geo_point" type="object">
+  Geographic coordinates
+  <Expandable>
+    <ResponseField name="lat" type="float">
+      Latitude
+    </ResponseField>
+    <ResponseField name="lng" type="float">
+      Longitude
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="services" type="array">
+  Services grouped by category
+  <Expandable>
+    <ResponseField name="id" type="integer">
+      Category ID (null for uncategorized)
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Category name
+    </ResponseField>
+    <ResponseField name="sequence" type="integer">
+      Display order
+    </ResponseField>
+    <ResponseField name="services" type="array">
+      Array of services in this category
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="business_hours" type="object">
+  Business hours by day of week (0=Sunday, 6=Saturday)
+</ResponseField>
+
+---
+
+### Get Service Details
+
+Get detailed information about a specific service including phases and pricing.
+
+```
+GET /api/v1/merchants/{merchantName}/locations/{locationId}/services/{serviceId}
+```
+
+<CodeGroup>
+```bash cURL
+curl https://api.reservations.com/api/v1/merchants/joes-barber-shop/locations/1/services/5
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchants/joes-barber-shop/locations/1/services/5');
+const serviceDetails = await response.json();
+```
+</CodeGroup>
+
+#### Path Parameters
+
+<ParamField path="merchantName" type="string" required>
+  URL-friendly merchant identifier
+</ParamField>
+
+<ParamField path="locationId" type="integer" required>
+  Location ID
+</ParamField>
+
+<ParamField path="serviceId" type="integer" required>
+  Service ID
+</ParamField>
+
+#### Response
+
+<ResponseField name="id" type="integer">
+  Service ID
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Service name
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Service description
+</ResponseField>
+
+<ResponseField name="total_duration" type="integer">
+  Total duration in minutes
+</ResponseField>
+
+<ResponseField name="price" type="object">
+  Formatted price information
+</ResponseField>
+
+<ResponseField name="price_type" type="string">
+  Price type: "fixed", "variable", or "per_person"
+</ResponseField>
+
+<ResponseField name="formatted_location" type="string">
+  Service location address
+</ResponseField>
+
+<ResponseField name="geo_point" type="object">
+  Geographic coordinates
+</ResponseField>
+
+<ResponseField name="phases" type="array">
+  Service phases (for multi-phase services)
+</ResponseField>
+
+---
+
+### Get Booking Summary
+
+Get a summary of service information for the booking confirmation screen.
+
+```
+GET /api/v1/merchants/{merchantName}/locations/{locationId}/services/{serviceId}/summary
+```
+
+<CodeGroup>
+```bash cURL
+curl https://api.reservations.com/api/v1/merchants/joes-barber-shop/locations/1/services/5/summary
+```
+</CodeGroup>
+
+#### Response
+
+<ResponseField name="name" type="string">
+  Service name
+</ResponseField>
+
+<ResponseField name="total_duration" type="integer">
+  Duration in minutes
+</ResponseField>
+
+<ResponseField name="price" type="object">
+  Formatted price
+</ResponseField>
+
+<ResponseField name="price_type" type="string">
+  Pricing model
+</ResponseField>
+
+<ResponseField name="formatted_location" type="string">
+  Location address
+</ResponseField>
+
+---
+
+### Check Service Availability
+
+Get available time slots for a service within a date range.
+
+```
+GET /api/v1/merchants/{merchantName}/locations/{locationId}/services/{serviceId}/availability?start={startDate}&end={endDate}
+```
+
+<CodeGroup>
+```bash cURL
+curl "https://api.reservations.com/api/v1/merchants/joes-barber-shop/locations/1/services/5/availability?start=2024-03-01T00:00:00Z&end=2024-03-07T23:59:59Z"
+```
+
+```javascript JavaScript
+const start = new Date('2024-03-01').toISOString();
+const end = new Date('2024-03-07').toISOString();
+
+const response = await fetch(
+  `/api/v1/merchants/joes-barber-shop/locations/1/services/5/availability?start=${start}&end=${end}`
+);
+const availability = await response.json();
+```
+</CodeGroup>
+
+#### Query Parameters
+
+<ParamField query="start" type="string" required>
+  Start date in RFC3339 format (ISO 8601)
+</ParamField>
+
+<ParamField query="end" type="string" required>
+  End date in RFC3339 format (ISO 8601)
+</ParamField>
+
+#### Response
+
+Returns an array of availability by date:
+
+<ResponseField name="date" type="string">
+  Date in ISO format
+</ResponseField>
+
+<ResponseField name="is_available" type="boolean">
+  Whether any slots are available on this date
+</ResponseField>
+
+<ResponseField name="morning" type="string[]">
+  Array of available morning time slots
+</ResponseField>
+
+<ResponseField name="afternoon" type="string[]">
+  Array of available afternoon time slots
+</ResponseField>
+
+---
+
+### Get Next Available Slot
+
+Find the next available booking slot for a service.
+
+```
+GET /api/v1/merchants/{merchantName}/locations/{locationId}/services/{serviceId}/availability/next
+```
+
+<CodeGroup>
+```bash cURL
+curl https://api.reservations.com/api/v1/merchants/joes-barber-shop/locations/1/services/5/availability/next
+```
+</CodeGroup>
+
+#### Response
+
+<ResponseField name="date" type="string">
+  Next available date
+</ResponseField>
+
+<ResponseField name="time" type="string">
+  Next available time slot
+</ResponseField>
+
+---
+
+### Get Disabled Days
+
+Get days when the service is unavailable for booking.
+
+```
+GET /api/v1/merchants/{merchantName}/locations/{locationId}/services/{serviceId}/availability/disabled-days
+```
+
+<CodeGroup>
+```bash cURL
+curl https://api.reservations.com/api/v1/merchants/joes-barber-shop/locations/1/services/5/availability/disabled-days
+```
+</CodeGroup>
+
+#### Response
+
+<ResponseField name="closed_days" type="integer[]">
+  Array of day numbers when closed (0=Sunday, 6=Saturday)
+</ResponseField>
+
+<ResponseField name="min_date" type="string">
+  Earliest bookable date
+</ResponseField>
+
+<ResponseField name="max_date" type="string">
+  Latest bookable date
+</ResponseField>
+
+## Use Cases
+
+### Customer Booking Flow
+
+1. **Discovery**: Get merchant information to display location and services
+2. **Service Selection**: Show service details when customer selects a service
+3. **Date Selection**: Use disabled days to configure the date picker
+4. **Time Selection**: Fetch availability for the selected date range
+5. **Confirmation**: Display booking summary before creating the booking
+
+### Integration Example
+
+```javascript
+// Step 1: Load merchant information
+const merchantInfo = await fetch('/api/v1/merchants/joes-barber-shop').then(r => r.json());
+
+// Step 2: Get service details
+const service = await fetch(
+  `/api/v1/merchants/joes-barber-shop/locations/${merchantInfo.location_id}/services/5`
+).then(r => r.json());
+
+// Step 3: Check disabled days for calendar
+const disabledDays = await fetch(
+  `/api/v1/merchants/joes-barber-shop/locations/${merchantInfo.location_id}/services/5/availability/disabled-days`
+).then(r => r.json());
+
+// Step 4: Get availability for selected week
+const start = new Date('2024-03-01').toISOString();
+const end = new Date('2024-03-07').toISOString();
+
+const availability = await fetch(
+  `/api/v1/merchants/joes-barber-shop/locations/${merchantInfo.location_id}/services/5/availability?start=${start}&end=${end}`
+).then(r => r.json());
+
+// Step 5: Display booking summary
+const summary = await fetch(
+  `/api/v1/merchants/joes-barber-shop/locations/${merchantInfo.location_id}/services/5/summary`
+).then(r => r.json());
+```
+
+## Best Practices
+
+- **Cache merchant information**: Merchant info changes infrequently, cache it to reduce API calls
+- **Batch availability checks**: Fetch availability for entire weeks rather than individual days
+- **Handle timezones**: Always use the merchant's timezone from the merchant info response
+- **Error handling**: Handle cases where merchants or services don't exist gracefully
+- **Respect disabled days**: Use the disabled-days endpoint to prevent users from selecting unavailable dates

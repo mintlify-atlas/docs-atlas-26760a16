@@ -1,0 +1,270 @@
+---
+title: Blocked Time Types
+description: Manage reusable blocked time type templates for your merchant account
+---
+
+## Overview
+
+Blocked time types are reusable templates that define common types of unavailable time periods for your team members. Each type has a name, duration, and optional icon to help categorize and visualize different kinds of blocked times (e.g., "Lunch Break", "Meeting", "Personal Time Off").
+
+## Endpoints
+
+### Create Blocked Time Type
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.reservations.com/api/v1/merchant/blocked-time-types \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Lunch Break",
+    "duration": 60,
+    "icon": "utensils"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchant/blocked-time-types', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'Lunch Break',
+    duration: 60,
+    icon: 'utensils'
+  })
+});
+```
+
+```python Python
+response = requests.post(
+    'https://api.reservations.com/api/v1/merchant/blocked-time-types',
+    headers={
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'name': 'Lunch Break',
+        'duration': 60,
+        'icon': 'utensils'
+    }
+)
+```
+</CodeGroup>
+
+#### Request Body
+
+<ParamField path="name" type="string" required>
+  Name of the blocked time type (max 50 characters)
+</ParamField>
+
+<ParamField path="duration" type="integer" required>
+  Default duration in minutes (must be at least 1)
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Optional icon identifier for visual representation (max 20 characters)
+</ParamField>
+
+#### Response
+
+Returns `201 Created` on success with no body.
+
+---
+
+### Update Blocked Time Type
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.reservations.com/api/v1/merchant/blocked-time-types/123 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 123,
+    "name": "Extended Lunch",
+    "duration": 90,
+    "icon": "utensils"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchant/blocked-time-types/123', {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    id: 123,
+    name: 'Extended Lunch',
+    duration: 90,
+    icon: 'utensils'
+  })
+});
+```
+</CodeGroup>
+
+#### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the blocked time type to update
+</ParamField>
+
+#### Request Body
+
+<ParamField path="id" type="integer" required>
+  The blocked time type ID (must match URL parameter)
+</ParamField>
+
+<ParamField path="name" type="string" required>
+  Updated name (max 50 characters)
+</ParamField>
+
+<ParamField path="duration" type="integer" required>
+  Updated duration in minutes (must be at least 1)
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Updated icon identifier (max 20 characters)
+</ParamField>
+
+#### Response
+
+Returns `200 OK` on success with no body.
+
+---
+
+### Delete Blocked Time Type
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.reservations.com/api/v1/merchant/blocked-time-types/123 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchant/blocked-time-types/123', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`
+  }
+});
+```
+</CodeGroup>
+
+#### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the blocked time type to delete
+</ParamField>
+
+#### Response
+
+Returns `200 OK` on success with no body.
+
+<Warning>
+  Deleting a blocked time type does not delete existing blocked times created from this type. Only the template itself is removed.
+</Warning>
+
+---
+
+### Get All Blocked Time Types
+
+<CodeGroup>
+```bash cURL
+curl https://api.reservations.com/api/v1/merchant/blocked-time-types \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('/api/v1/merchant/blocked-time-types', {
+  headers: {
+    'Authorization': `Bearer ${accessToken}`
+  }
+});
+
+const types = await response.json();
+```
+</CodeGroup>
+
+#### Response
+
+<ResponseField name="id" type="integer">
+  Unique identifier for the blocked time type
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Name of the blocked time type
+</ResponseField>
+
+<ResponseField name="duration" type="integer">
+  Default duration in minutes
+</ResponseField>
+
+<ResponseField name="icon" type="string">
+  Icon identifier for the type
+</ResponseField>
+
+#### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Lunch Break",
+    "duration": 60,
+    "icon": "utensils"
+  },
+  {
+    "id": 2,
+    "name": "Meeting",
+    "duration": 30,
+    "icon": "users"
+  },
+  {
+    "id": 3,
+    "name": "Personal Time",
+    "duration": 120,
+    "icon": "calendar-times"
+  }
+]
+```
+
+## Common Use Cases
+
+### Creating Standard Break Types
+
+Create commonly used blocked time types for your organization:
+
+```javascript
+const breakTypes = [
+  { name: 'Lunch Break', duration: 60, icon: 'utensils' },
+  { name: 'Coffee Break', duration: 15, icon: 'coffee' },
+  { name: 'Team Meeting', duration: 30, icon: 'users' }
+];
+
+for (const type of breakTypes) {
+  await fetch('/api/v1/merchant/blocked-time-types', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(type)
+  });
+}
+```
+
+### Using Types with Blocked Times
+
+Once created, blocked time types can be referenced when creating [blocked times](/api/merchant/blocked-times) to standardize the duration and appearance of recurring unavailable periods.
+
+## Best Practices
+
+- **Keep names descriptive**: Use clear names like "Lunch Break" instead of "Break 1"
+- **Standardize durations**: Set realistic default durations that match your typical needs
+- **Use meaningful icons**: Choose icons that visually represent the type of blocked time
+- **Limit the number of types**: Create only the types you'll regularly use to avoid clutter
+- **Team consistency**: Ensure all team members understand when to use each type
