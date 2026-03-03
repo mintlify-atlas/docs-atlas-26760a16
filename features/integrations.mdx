@@ -1,0 +1,432 @@
+---
+title: Integrations
+description: Connect external services including Google Calendar sync and OAuth authentication providers
+---
+
+Extend your platform's capabilities by connecting with third-party services for calendar synchronization and user authentication.
+
+## Overview
+
+Integrations allow your reservation platform to work seamlessly with the tools you already use, reducing manual data entry and streamlining workflows.
+
+<CardGroup cols={2}>
+  <Card title="Calendar Sync" icon="calendar">
+    Two-way synchronization with Google Calendar
+  </Card>
+  
+  <Card title="OAuth Providers" icon="user-lock">
+    Sign in with Google or Facebook accounts
+  </Card>
+</CardGroup>
+
+## Google Calendar Integration
+
+Sync your bookings with Google Calendar for unified schedule management.
+
+### How It Works
+
+<Info>
+  Two-way sync means changes in either calendar automatically update the other.
+</Info>
+
+<img src="/images/google-calendar-sync.png" alt="Google Calendar Integration" />
+
+**From Reservations to Google Calendar:**
+- New bookings create Google Calendar events
+- Booking updates sync to existing events
+- Cancelled bookings remove calendar events
+- Recurring bookings create recurring calendar events
+
+**From Google Calendar to Reservations:**
+- Events created in Google Calendar block time in your system
+- Updated Google events adjust blocked time
+- Deleted Google events remove blocks
+
+### Setting Up Google Calendar Sync
+
+<Steps>
+  <Step title="Navigate to Integrations">
+    Click "Integrations" in the sidebar menu
+  </Step>
+  
+  <Step title="Click Sync Button">
+    Under "Calendar" section, click the "Sync" button with Google icon
+  </Step>
+  
+  <Step title="Authorize Access">
+    - Sign in to your Google account
+    - Grant calendar access permissions
+    - Select which calendar to sync
+  </Step>
+  
+  <Step title="Confirm Connection">
+    Return to the platform and verify sync is active
+  </Step>
+</Steps>
+
+### What Gets Synced
+
+<Tabs>
+  <Tab title="Booking Details">
+    Google Calendar events include:
+    
+    - **Event title**: Customer name or "Walk-in"
+    - **Time**: Exact booking start and end
+    - **Description**: Service name, customer notes, merchant notes
+    - **Color**: Service color (if supported)
+  </Tab>
+  
+  <Tab title="Blocked Time">
+    Blocked time periods appear as:
+    
+    - **Busy time**: Marked as unavailable
+    - **Event title**: Block type name and icon
+    - **All-day option**: For full-day blocks
+  </Tab>
+  
+  <Tab title="Recurring Events">
+    Recurring bookings create:
+    
+    - **Recurring calendar events**: Same recurrence rule
+    - **Individual instances**: Each editable separately
+    - **Sync updates**: Changes propagate across all instances
+  </Tab>
+</Tabs>
+
+### Managing Sync
+
+<Accordion title="Sync Status">
+  
+  Check sync health in Integrations page:
+  - **Active**: Green indicator, syncing normally
+  - **Error**: Red indicator with error message
+  - **Disconnected**: Gray indicator, no sync
+  
+  Last sync timestamp shows when data was last updated.
+  
+</Accordion>
+
+<Accordion title="Disconnecting">
+  
+  To stop syncing:
+  1. Go to Integrations
+  2. Click "Disconnect" on Google Calendar
+  3. Confirm disconnection
+  
+  Existing calendar events remain but won't update.
+  
+</Accordion>
+
+<Accordion title="Re-syncing">
+  
+  Force a manual sync:
+  1. Disconnect current integration
+  2. Wait 30 seconds
+  3. Reconnect following setup steps
+  
+  All current bookings will re-sync to calendar.
+  
+</Accordion>
+
+### Sync Behavior
+
+<CardGroup cols={2}>
+  <Card title="Real-time Updates" icon="bolt">
+    Changes sync within minutes of being made in either system
+  </Card>
+  
+  <Card title="Conflict Resolution" icon="triangle-exclamation">
+    Reservations platform is source of truth for booking conflicts
+  </Card>
+  
+  <Card title="Privacy" icon="shield">
+    Only you see customer details; customers only see your availability
+  </Card>
+  
+  <Card title="Reliability" icon="check">
+    Automatic retry on failed sync attempts
+  </Card>
+</CardGroup>
+
+### Google Calendar Benefits
+
+<Tabs>
+  <Tab title="Mobile Access">
+    - View schedule on any device with Google Calendar app
+    - Get mobile notifications for upcoming bookings
+    - Quick schedule checks on the go
+  </Tab>
+  
+  <Tab title="Desktop Integration">
+    - Schedule appears in Gmail sidebar
+    - Outlook integration via Google Calendar
+    - Mac Calendar app support
+  </Tab>
+  
+  <Tab title="Sharing">
+    - Share availability with team members
+    - Let assistant manage your calendar
+    - Family calendar integration
+  </Tab>
+</Tabs>
+
+## OAuth Authentication
+
+Allow customers to sign in using their existing social media accounts.
+
+### Supported Providers
+
+<CardGroup cols={2}>
+  <Card title="Google OAuth" icon="google">
+    Sign in with Google account - most popular option for quick registration
+  </Card>
+  
+  <Card title="Facebook OAuth" icon="facebook">
+    Sign in with Facebook account - convenient for social users
+  </Card>
+</CardGroup>
+
+### How OAuth Works
+
+<Info>
+  OAuth lets customers authenticate without creating a new password, using accounts they already trust.
+</Info>
+
+<Steps>
+  <Step title="Customer Clicks Sign In">
+    On your booking page, customer selects Google or Facebook
+  </Step>
+  
+  <Step title="Redirect to Provider">
+    Customer is taken to Google/Facebook login
+  </Step>
+  
+  <Step title="Authorize Access">
+    Customer grants permission to access basic profile info
+  </Step>
+  
+  <Step title="Account Creation">
+    System creates customer account using OAuth data
+  </Step>
+  
+  <Step title="Return to Platform">
+    Customer is logged in and ready to book
+  </Step>
+</Steps>
+
+### OAuth Data Collection
+
+From OAuth providers, we collect:
+
+<Tabs>
+  <Tab title="Google">
+    - Email address
+    - First and last name
+    - Profile photo (optional)
+    - No access to Gmail or other Google services
+  </Tab>
+  
+  <Tab title="Facebook">
+    - Email address
+    - First and last name  
+    - Profile photo (optional)
+    - No access to posts, friends, or other Facebook data
+  </Tab>
+</Tabs>
+
+### Benefits of OAuth
+
+<CardGroup cols={2}>
+  <Card title="Faster Registration" icon="gauge-high">
+    Customers book in seconds without filling forms
+  </Card>
+  
+  <Card title="Higher Conversion" icon="arrow-trend-up">
+    Reduce abandoned bookings from registration friction
+  </Card>
+  
+  <Card title="Verified Emails" icon="envelope-circle-check">
+    OAuth providers verify email addresses for you
+  </Card>
+  
+  <Card title="Security" icon="lock">
+    No passwords to store or manage for OAuth users
+  </Card>
+</CardGroup>
+
+### Managing OAuth Accounts
+
+Customers who signed in via OAuth:
+
+- Can add password later for direct login
+- Can link multiple OAuth providers
+- Receive booking confirmations at OAuth email
+- Can update profile information normally
+
+<Warning>
+  If customer revokes OAuth access at the provider, they must use password login or re-authorize.
+</Warning>
+
+## Integration Security
+
+<CardGroup cols={2}>
+  <Card title="Secure Tokens" icon="key">
+    All integrations use encrypted OAuth 2.0 tokens
+  </Card>
+  
+  <Card title="Limited Scope" icon="shield-halved">
+    Apps only access calendar and profile data, nothing else
+  </Card>
+  
+  <Card title="Revocable Access" icon="user-slash">
+    Disconnect integrations anytime without data loss
+  </Card>
+  
+  <Card title="No Password Storage" icon="user-lock">
+    OAuth tokens used instead of storing third-party passwords
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<Accordion title="Google Calendar Not Syncing">
+  
+  **Check these steps:**
+  
+  1. Verify integration status is "Active"
+  2. Confirm calendar permissions weren't revoked in Google
+  3. Check Google Calendar settings allow third-party apps
+  4. Try disconnecting and reconnecting
+  5. Contact support if issue persists
+  
+  **Common causes:**
+  - Calendar permission revoked
+  - Google account password changed
+  - Calendar deleted or renamed
+  
+</Accordion>
+
+<Accordion title="OAuth Sign-In Failed">
+  
+  **Solutions:**
+  
+  1. Clear browser cookies and try again
+  2. Verify email address is confirmed at provider
+  3. Check if pop-ups are blocked
+  4. Try different browser
+  5. Use email/password login instead
+  
+  **Common causes:**
+  - Browser blocking OAuth redirect
+  - Email not verified at provider
+  - Account disabled at provider
+  
+</Accordion>
+
+<Accordion title="Duplicate Calendar Events">
+  
+  **Fix the issue:**
+  
+  1. Disconnect Google Calendar integration
+  2. Delete duplicate events in Google Calendar
+  3. Wait 5 minutes
+  4. Reconnect integration
+  5. Verify events sync correctly
+  
+  Usually caused by multiple sync connections.
+  
+</Accordion>
+
+## Future Integrations
+
+<Info>
+  More integrations are coming soon! Requested integrations include:
+</Info>
+
+<CardGroup cols={2}>
+  <Card title="Microsoft Outlook" icon="calendar">
+    Calendar sync for Outlook and Office 365 users
+  </Card>
+  
+  <Card title="Zoom" icon="video">
+    Auto-create meeting links for virtual appointments
+  </Card>
+  
+  <Card title="Stripe" icon="credit-card">
+    Accept payments for bookings
+  </Card>
+  
+  <Card title="Zapier" icon="bolt">
+    Connect to 1000+ apps via Zapier integration
+  </Card>
+</CardGroup>
+
+## Integration Limits
+
+<Tabs>
+  <Tab title="Google Calendar">
+    - 1 connected calendar per merchant
+    - Sync up to 1000 events
+    - Updates every 5 minutes
+    - 90 days of historical sync
+  </Tab>
+  
+  <Tab title="OAuth">
+    - Unlimited OAuth sign-ins
+    - 1 primary OAuth provider per customer
+    - Can link multiple providers
+    - No usage limits
+  </Tab>
+</Tabs>
+
+## Privacy Considerations
+
+<Warning>
+  Customer booking details synced to your Google Calendar are private to you. Customers cannot see your calendar.
+</Warning>
+
+What customers can see:
+- Your available time slots
+- Business hours
+- Blocked time (as "unavailable")
+
+What customers cannot see:
+- Other customers' bookings
+- Booking details
+- Personal calendar events
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Dedicated Calendar" icon="calendar-plus">
+    Create a separate Google Calendar for business bookings to keep personal events separate
+  </Card>
+  
+  <Card title="Regular Checks" icon="clock-rotate-left">
+    Review sync status weekly to catch issues early
+  </Card>
+  
+  <Card title="OAuth Options" icon="users">
+    Enable multiple OAuth providers to give customers choice
+  </Card>
+  
+  <Card title="Backup Method" icon="floppy-disk">
+    Always offer email/password option alongside OAuth
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Calendar" icon="calendar" href="/features/calendar-scheduling">
+    Manage your synced schedule
+  </Card>
+  
+  <Card title="Settings" icon="gear" href="/settings/profile">
+    Configure integration preferences
+  </Card>
+  
+  <Card title="Support" icon="question" href="/support">
+    Get help with integrations
+  </Card>
+</CardGroup>

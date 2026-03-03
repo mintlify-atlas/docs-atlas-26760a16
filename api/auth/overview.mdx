@@ -1,0 +1,129 @@
+---
+title: "Authentication Overview"
+description: "Overview of authentication methods and security in the Reservations API"
+---
+
+## Overview
+
+The Reservations API provides secure authentication through multiple methods to support different use cases and user preferences. All authenticated endpoints use JWT (JSON Web Token) based authentication with access and refresh tokens.
+
+## Authentication Methods
+
+The API supports three authentication methods:
+
+### 1. Email/Password Authentication
+
+Traditional username and password authentication for users who prefer to manage their own credentials.
+
+- **Endpoint**: `POST /api/v1/auth/login`
+- **User Registration**: `POST /api/v1/auth/users`
+- **See**: [JWT Authentication](/api/auth/jwt)
+
+### 2. OAuth 2.0 - Google
+
+Authenticate using a Google account through OAuth 2.0 protocol.
+
+- **Scopes**: `email`, `profile`
+- **Endpoints**: `/api/v1/auth/oauth/google`, `/api/v1/auth/oauth/google/callback`
+- **See**: [OAuth Authentication](/api/auth/oauth)
+
+### 3. OAuth 2.0 - Facebook
+
+Authenticate using a Facebook account through OAuth 2.0 protocol.
+
+- **Scopes**: `email`, `public_profile`
+- **Endpoints**: `/api/v1/auth/oauth/facebook`, `/api/v1/auth/oauth/facebook/callback`
+- **See**: [OAuth Authentication](/api/auth/oauth)
+
+## Token-Based Authentication
+
+All authentication methods return a pair of JWT tokens:
+
+- **Access Token**: Short-lived token for API requests (configured via `JWT_ACCESS_EXP_MIN`)
+- **Refresh Token**: Long-lived token for obtaining new access tokens (configured via `JWT_REFRESH_EXP_MIN`)
+
+Tokens are automatically set as HTTP-only cookies:
+- `jwt-access`: Access token cookie
+- `jwt-refresh`: Refresh token cookie
+
+## Token Contents
+
+JWT tokens contain the following claims:
+
+<ParamField path="sub" type="uuid" required>
+  User ID (UUID v7)
+</ParamField>
+
+<ParamField path="exp" type="integer" required>
+  Expiration timestamp (Unix epoch)
+</ParamField>
+
+<ParamField path="merchant_id" type="uuid">
+  Merchant ID (present if user is associated with a merchant)
+</ParamField>
+
+<ParamField path="employee_id" type="integer">
+  Employee ID (present if user is an employee)
+</ParamField>
+
+<ParamField path="location_id" type="integer">
+  Location ID (present if user is an employee)
+</ParamField>
+
+<ParamField path="employee_role" type="string">
+  Employee role (present if user is an employee)
+</ParamField>
+
+<ParamField path="refresh_version" type="integer">
+  Refresh token version (refresh tokens only, used for logout-all-devices)
+</ParamField>
+
+## Security Features
+
+### Password Hashing
+
+Passwords are hashed using bcrypt with a cost factor of 14, providing strong protection against brute-force attacks.
+
+### Token Security
+
+- Tokens are stored in HTTP-only cookies to prevent XSS attacks
+- Separate secrets for access and refresh tokens
+- Cookie settings include:
+  - `HttpOnly: true`
+  - `SameSite: Lax`
+  - `Domain: .reservations.local`
+  - `Secure: false` (set to `true` in production)
+
+### OAuth State Validation
+
+OAuth flows use state parameters to prevent CSRF attacks. The state is validated on the callback to ensure the request originated from the same user session.
+
+### Logout All Devices
+
+The API supports invalidating all refresh tokens for a user by incrementing the `jwt_refresh_version` in the database, forcing re-authentication on all devices.
+
+## Protected Endpoints
+
+Endpoints requiring authentication:
+
+- `GET /api/v1/auth/me` - Get current user information
+- `POST /api/v1/auth/logout` - Logout from current device
+- `POST /api/v1/auth/logout/all` - Logout from all devices
+- `POST /api/v1/auth/merchants` - Create a merchant account
+
+## Error Handling
+
+<ResponseField name="error" type="string">
+  Error message describing what went wrong
+</ResponseField>
+
+Common error responses:
+
+- `400 Bad Request`: Invalid request parameters or validation errors
+- `401 Unauthorized`: Invalid credentials or expired tokens
+- `500 Internal Server Error`: Unexpected server errors
+
+## Next Steps
+
+- [JWT Authentication](/api/auth/jwt) - Learn about login, signup, and token management
+- [OAuth Authentication](/api/auth/oauth) - Implement Google or Facebook login

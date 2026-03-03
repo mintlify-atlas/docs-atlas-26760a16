@@ -1,0 +1,236 @@
+---
+title: Environment Configuration
+description: Configure environment variables for the Reservations application
+---
+
+## Environment File
+
+The Reservations application requires environment variables to be defined in a `.env` file at the root of the project. Create this file before running the application:
+
+```bash
+touch .env
+```
+
+## Required Environment Variables
+
+All environment variables listed below are required for the application to run successfully. The application validates these variables on startup and will fail if any are missing.
+
+### Application Settings
+
+<ParamField path="PORT" type="string" required>
+  The port number on which the backend server will listen
+  
+  ```bash
+  PORT=8080
+  ```
+</ParamField>
+
+<ParamField path="APP_ENV" type="string" required>
+  The application environment (e.g., `development`, `production`, `staging`)
+  
+  ```bash
+  APP_ENV=development
+  ```
+</ParamField>
+
+### Database Configuration
+
+<ParamField path="DB_HOST" type="string" required>
+  PostgreSQL database host address
+  
+  ```bash
+  DB_HOST=localhost
+  ```
+</ParamField>
+
+<ParamField path="DB_PORT" type="string" required>
+  PostgreSQL database port (default: 5432)
+  
+  ```bash
+  DB_PORT=5432
+  ```
+</ParamField>
+
+<ParamField path="DB_DATABASE" type="string" required>
+  Name of the PostgreSQL database
+  
+  ```bash
+  DB_DATABASE=reservations
+  ```
+</ParamField>
+
+<ParamField path="DB_USERNAME" type="string" required>
+  PostgreSQL database username
+  
+  ```bash
+  DB_USERNAME=postgres
+  ```
+</ParamField>
+
+<ParamField path="DB_PASSWORD" type="string" required>
+  PostgreSQL database password
+  
+  ```bash
+  DB_PASSWORD=your_secure_password
+  ```
+</ParamField>
+
+<ParamField path="DB_SCHEMA" type="string" required>
+  PostgreSQL schema name (usually `public`)
+  
+  ```bash
+  DB_SCHEMA=public
+  ```
+</ParamField>
+
+### JWT Authentication
+
+<ParamField path="JWT_ACCESS_SECRET" type="string" required>
+  Secret key for signing JWT access tokens. Use a strong, randomly generated string.
+  
+  ```bash
+  JWT_ACCESS_SECRET=your_access_secret_key_min_32_chars
+  ```
+</ParamField>
+
+<ParamField path="JWT_ACCESS_EXP_MIN" type="integer" required>
+  JWT access token expiration time in minutes
+  
+  ```bash
+  JWT_ACCESS_EXP_MIN=15
+  ```
+</ParamField>
+
+<ParamField path="JWT_REFRESH_SECRET" type="string" required>
+  Secret key for signing JWT refresh tokens. Use a different strong, randomly generated string.
+  
+  ```bash
+  JWT_REFRESH_SECRET=your_refresh_secret_key_min_32_chars
+  ```
+</ParamField>
+
+<ParamField path="JWT_REFRESH_EXP_MIN" type="integer" required>
+  JWT refresh token expiration time in minutes
+  
+  ```bash
+  JWT_REFRESH_EXP_MIN=10080
+  ```
+  
+  <Note>10080 minutes equals 7 days</Note>
+</ParamField>
+
+### Email Configuration
+
+<ParamField path="RESEND_API_TEST" type="string" required>
+  Resend API key for sending transactional emails. Get your API key from [Resend](https://resend.com)
+  
+  ```bash
+  RESEND_API_TEST=re_xxxxxxxxxxxx
+  ```
+</ParamField>
+
+<ParamField path="ENABLE_EMAILS" type="boolean" required>
+  Enable or disable email sending functionality
+  
+  ```bash
+  ENABLE_EMAILS=true
+  ```
+  
+  <Warning>Set to `false` in development to prevent sending emails</Warning>
+</ParamField>
+
+### OAuth Configuration
+
+<ParamField path="GOOGLE_OAUTH_CLIENT_ID" type="string" required>
+  Google OAuth 2.0 client ID for Google authentication. Obtain from [Google Cloud Console](https://console.cloud.google.com)
+  
+  ```bash
+  GOOGLE_OAUTH_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+  ```
+</ParamField>
+
+<ParamField path="GOOGLE_OAUTH_CLIENT_SECRET" type="string" required>
+  Google OAuth 2.0 client secret
+  
+  ```bash
+  GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret
+  ```
+</ParamField>
+
+<ParamField path="FACEBOOK_OAUTH_CLIENT_ID" type="string" required>
+  Facebook OAuth client ID (App ID) for Facebook authentication. Obtain from [Facebook Developers](https://developers.facebook.com)
+  
+  ```bash
+  FACEBOOK_OAUTH_CLIENT_ID=your_facebook_app_id
+  ```
+</ParamField>
+
+<ParamField path="FACEBOOK_OAUTH_CLIENT_SECRET" type="string" required>
+  Facebook OAuth client secret (App Secret)
+  
+  ```bash
+  FACEBOOK_OAUTH_CLIENT_SECRET=your_facebook_app_secret
+  ```
+</ParamField>
+
+### Frontend Configuration
+
+<ParamField path="VITE_MAPBOX_TOKEN" type="string" required>
+  Mapbox access token for map functionality in the frontend. Get your token from [Mapbox](https://www.mapbox.com)
+  
+  ```bash
+  VITE_MAPBOX_TOKEN=pk.xxxxxxxxxxxx
+  ```
+  
+  <Note>This variable is prefixed with `VITE_` to expose it to the Vite frontend build</Note>
+</ParamField>
+
+## Example .env File
+
+Here's a complete example `.env` file with all required variables:
+
+```bash .env
+# Application
+PORT=8080
+APP_ENV=development
+
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_DATABASE=reservations
+DB_USERNAME=postgres
+DB_PASSWORD=your_secure_password
+DB_SCHEMA=public
+
+# JWT Authentication
+JWT_ACCESS_SECRET=your_access_secret_key_min_32_chars
+JWT_ACCESS_EXP_MIN=15
+JWT_REFRESH_SECRET=your_refresh_secret_key_min_32_chars
+JWT_REFRESH_EXP_MIN=10080
+
+# Email
+RESEND_API_TEST=re_xxxxxxxxxxxx
+ENABLE_EMAILS=false
+
+# OAuth
+GOOGLE_OAUTH_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret
+FACEBOOK_OAUTH_CLIENT_ID=your_facebook_app_id
+FACEBOOK_OAUTH_CLIENT_SECRET=your_facebook_app_secret
+
+# Frontend
+VITE_MAPBOX_TOKEN=pk.xxxxxxxxxxxx
+```
+
+<Warning>
+  Never commit the `.env` file to version control. It should be included in your `.gitignore` file.
+</Warning>
+
+## Validation
+
+The application validates all required environment variables on startup (see `backend/cmd/config/config.go:84-103`). If any variables are missing or invalid, the application will fail to start with a clear error message indicating which variable is missing.
+
+## Next Steps
+
+- [Set up the database](/setup/database)
+- [Build the application](/setup/building)

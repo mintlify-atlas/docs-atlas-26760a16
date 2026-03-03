@@ -1,0 +1,226 @@
+---
+title: Backend Overview
+description: Architecture and technology stack of the Reservations backend
+---
+
+## Introduction
+
+The Reservations backend is built with Go, following clean architecture principles with a clear separation between domain models, business logic, and data access layers.
+
+## Technology Stack
+
+<CardGroup cols={2}>
+  <Card title="Go" icon="golang">
+    Version 1.25.1 - Primary backend language
+  </Card>
+  <Card title="Chi Router" icon="route">
+    Lightweight HTTP router for building REST APIs
+  </Card>
+  <Card title="PostgreSQL" icon="database">
+    Primary database with pgx/v5 driver
+  </Card>
+  <Card title="JWT" icon="key">
+    Authentication using JSON Web Tokens
+  </Card>
+</CardGroup>
+
+## Architecture Overview
+
+The backend follows a layered architecture pattern:
+
+```
+backend/
+├── cmd/              # Application entry points
+│   ├── config/       # Configuration management
+│   └── main.go       # Application bootstrap
+├── internal/         # Private application code
+│   ├── api/          # HTTP handlers and routing
+│   ├── domain/       # Domain models and interfaces
+│   ├── service/      # Business logic layer
+│   ├── repository/   # Data access implementations
+│   └── types/        # Shared type definitions
+└── pkg/              # Public reusable packages
+```
+
+## Folder Structure
+
+<Accordion title="cmd/ - Application Bootstrap">
+  Contains the application entry point and configuration loading:
+  
+  - **main.go** - Initializes the application, sets up database connection, and starts the HTTP server
+  - **config/** - Environment variable loading and validation
+</Accordion>
+
+<Accordion title="internal/api/ - HTTP Layer">
+  Handles HTTP requests and routes:
+  
+  - **router.go** - Defines all API routes and middleware
+  - **handler/** - HTTP request handlers organized by domain
+  - **middleware/** - Authentication, authorization, and request processing
+</Accordion>
+
+<Accordion title="internal/domain/ - Domain Layer">
+  Core business entities and repository interfaces:
+  
+  - Domain models (Booking, Merchant, Customer, etc.)
+  - Repository interfaces defining data operations
+  - Pure business entities with no external dependencies
+</Accordion>
+
+<Accordion title="internal/service/ - Business Logic">
+  Service layer implementing business rules:
+  
+  - booking/ - Booking creation, cancellation, and management
+  - merchant/ - Merchant operations and dashboard
+  - customer/ - Customer management and blacklisting
+  - catalog/ - Service and product catalog
+  - auth/ - Authentication and OAuth
+</Accordion>
+
+<Accordion title="internal/repository/ - Data Access">
+  Database implementations of repository interfaces:
+  
+  - **db/** - PostgreSQL implementations using pgx
+  - Transaction management
+  - SQL query execution
+</Accordion>
+
+## Key Dependencies
+
+<CodeGroup>
+```go go.mod
+require (
+    github.com/go-chi/chi/v5 v5.2.3          // HTTP router
+    github.com/jackc/pgx/v5 v5.8.0            // PostgreSQL driver
+    github.com/golang-jwt/jwt/v5 v5.3.0       // JWT authentication
+    github.com/google/uuid v1.6.0             // UUID generation
+    github.com/bojanz/currency v1.4.1         // Currency handling
+    github.com/resend/resend-go/v2 v2.28.0    // Email service
+    golang.org/x/oauth2 v0.34.0               // OAuth2 support
+)
+```
+</CodeGroup>
+
+## Application Bootstrap
+
+The application initialization follows this flow:
+
+<Steps>
+  <Step title="Load Configuration">
+    Environment variables are loaded and validated from the `.env` file
+    
+    ```go backend/cmd/main.go:23-24
+    cfg := config.LoadEnvVars()
+    cfg.Validate()
+    ```
+  </Step>
+  
+  <Step title="Initialize Database">
+    PostgreSQL connection pool is created using pgx
+    
+    ```go backend/cmd/main.go:26-27
+    dbConn := db.New()
+    defer dbConn.Close()
+    ```
+  </Step>
+  
+  <Step title="Wire Dependencies">
+    Repositories, services, and handlers are instantiated in the app package
+    
+    ```go backend/internal/app/app.go:47-68
+    blockedTimeRepo := repos.NewBlockedTimeRepository(dbConn)
+    bookingRepo := repos.NewBookingRepository(dbConn)
+    catalogRepo := repos.NewCatalogRepository(dbConn)
+    // ... more repositories
+    
+    emailService := emailSrv.NewService(cfg.RESEND_API_TEST, cfg.ENABLE_EMAILS)
+    authService := authSrv.NewService(merchantRepo, userRepo, teamRepo, transactionManager)
+    // ... more services
+    ```
+  </Step>
+  
+  <Step title="Start HTTP Server">
+    Chi router is configured and the HTTP server starts listening
+    
+    ```go backend/internal/app/app.go:89-95
+    srv := &http.Server{
+        Addr:         fmt.Sprintf(":%s", cfg.PORT),
+        Handler:      router,
+        IdleTimeout:  time.Minute,
+        ReadTimeout:  10 * time.Second,
+        WriteTimeout: 30 * time.Second,
+    }
+    ```
+  </Step>
+</Steps>
+
+## Environment Configuration
+
+The backend requires the following environment variables:
+
+<Accordion title="Database Configuration">
+  ```bash
+  DB_HOST=localhost
+  DB_PORT=5432
+  DB_DATABASE=reservations
+  DB_USERNAME=postgres
+  DB_PASSWORD=password
+  DB_SCHEMA=public
+  ```
+</Accordion>
+
+<Accordion title="JWT Configuration">
+  ```bash
+  JWT_ACCESS_SECRET=your-access-secret
+  JWT_ACCESS_EXP_MIN=15
+  JWT_REFRESH_SECRET=your-refresh-secret
+  JWT_REFRESH_EXP_MIN=10080
+  ```
+</Accordion>
+
+<Accordion title="OAuth Configuration">
+  ```bash
+  GOOGLE_OAUTH_CLIENT_ID=your-google-client-id
+  GOOGLE_OAUTH_CLIENT_SECRET=your-google-secret
+  FACEBOOK_OAUTH_CLIENT_ID=your-facebook-client-id
+  FACEBOOK_OAUTH_CLIENT_SECRET=your-facebook-secret
+  ```
+</Accordion>
+
+<Accordion title="Email Configuration">
+  ```bash
+  RESEND_API_TEST=your-resend-api-key
+  ENABLE_EMAILS=true
+  ```
+</Accordion>
+
+## Design Principles
+
+<CardGroup cols={2}>
+  <Card title="Clean Architecture" icon="layer-group">
+    Clear separation of concerns with domain, service, and repository layers
+  </Card>
+  <Card title="Dependency Injection" icon="plug">
+    Services receive dependencies through constructors for testability
+  </Card>
+  <Card title="Repository Pattern" icon="database">
+    Data access abstracted behind interfaces defined in the domain layer
+  </Card>
+  <Card title="Transaction Management" icon="arrows-rotate">
+    Coordinated database operations using transaction manager
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Domain Models" icon="cube" href="/backend/domain-models">
+    Explore core business entities
+  </Card>
+  <Card title="Services" icon="gears" href="/backend/services">
+    Learn about business logic layer
+  </Card>
+  <Card title="Repositories" icon="database" href="/backend/repositories">
+    Understand data access patterns
+  </Card>
+</CardGroup>

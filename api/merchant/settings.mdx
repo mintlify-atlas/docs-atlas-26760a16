@@ -1,0 +1,353 @@
+---
+title: Settings
+description: Manage merchant settings, business hours, and preferences
+---
+
+Manage your merchant configuration including business information, scheduling settings, business hours, and calendar preferences.
+
+## Get Settings
+
+<Note>
+Requires authentication. Accessible by Staff, Admin, and Owner roles.
+</Note>
+
+Retrieve all merchant settings including business hours and location information.
+
+```bash GET /api/v1/merchant/settings
+curl -X GET 'https://api.example.com/api/v1/merchant/settings' \
+  --cookie "session_token=your_session_token"
+```
+
+<ResponseField name="merchant_name" type="string">
+  Business name
+</ResponseField>
+
+<ResponseField name="contact_email" type="string">
+  Contact email address
+</ResponseField>
+
+<ResponseField name="introduction" type="string">
+  Brief introduction or tagline
+</ResponseField>
+
+<ResponseField name="announcement" type="string">
+  Current announcement or notice
+</ResponseField>
+
+<ResponseField name="about_us" type="string">
+  Detailed business description
+</ResponseField>
+
+<ResponseField name="parking_info" type="string">
+  Parking instructions for customers
+</ResponseField>
+
+<ResponseField name="payment_info" type="string">
+  Payment information and accepted methods
+</ResponseField>
+
+<ResponseField name="cancel_deadline" type="integer">
+  Cancellation deadline in minutes before appointment
+</ResponseField>
+
+<ResponseField name="booking_window_min" type="integer">
+  Minimum advance booking time in minutes
+</ResponseField>
+
+<ResponseField name="booking_window_max" type="integer">
+  Maximum advance booking time in minutes
+</ResponseField>
+
+<ResponseField name="buffer_time" type="integer">
+  Buffer time between appointments in minutes
+</ResponseField>
+
+<ResponseField name="timezone" type="string">
+  IANA timezone identifier (e.g., "America/New_York")
+</ResponseField>
+
+<ResponseField name="business_hours" type="object">
+  Map of day (0-6, Sunday=0) to array of time slots
+  <Expandable title="Time slot object">
+    <ResponseField name="start_time" type="string">
+      Start time in HH:MM:SS format
+    </ResponseField>
+    <ResponseField name="end_time" type="string">
+      End time in HH:MM:SS format
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="location_id" type="integer">
+  Primary location ID
+</ResponseField>
+
+<ResponseField name="country" type="string" optional>
+  Country name
+</ResponseField>
+
+<ResponseField name="city" type="string" optional>
+  City name
+</ResponseField>
+
+<ResponseField name="postal_code" type="string" optional>
+  Postal or ZIP code
+</ResponseField>
+
+<ResponseField name="address" type="string" optional>
+  Street address
+</ResponseField>
+
+<ResponseField name="formatted_location" type="string">
+  Complete formatted address
+</ResponseField>
+
+## Update Settings
+
+<Note>
+Requires authentication. Accessible by Staff, Admin, and Owner roles.
+</Note>
+
+Update merchant settings and business hours.
+
+```bash PATCH /api/v1/merchant/settings
+curl -X PATCH 'https://api.example.com/api/v1/merchant/settings' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "introduction": "Welcome to our salon",
+    "announcement": "Spring special: 20% off all services",
+    "about_us": "Professional hair and beauty services since 2020",
+    "parking_info": "Free parking in rear lot",
+    "payment_info": "We accept cash, credit cards, and mobile payments",
+    "cancel_deadline": 1440,
+    "booking_window_min": 60,
+    "booking_window_max": 10080,
+    "buffer_time": 15,
+    "business_hours": {
+      "1": [{"start_time": "09:00:00", "end_time": "17:00:00"}],
+      "2": [{"start_time": "09:00:00", "end_time": "17:00:00"}],
+      "3": [{"start_time": "09:00:00", "end_time": "17:00:00"}],
+      "4": [{"start_time": "09:00:00", "end_time": "17:00:00"}],
+      "5": [{"start_time": "09:00:00", "end_time": "20:00:00"}]
+    }
+  }'
+```
+
+<ParamField body="introduction" type="string" required>
+  Brief introduction or tagline
+</ParamField>
+
+<ParamField body="announcement" type="string" required>
+  Current announcement (can be empty string)
+</ParamField>
+
+<ParamField body="about_us" type="string" required>
+  Detailed business description
+</ParamField>
+
+<ParamField body="parking_info" type="string" required>
+  Parking instructions
+</ParamField>
+
+<ParamField body="payment_info" type="string" required>
+  Payment information
+</ParamField>
+
+<ParamField body="cancel_deadline" type="integer" required>
+  Cancellation deadline in minutes
+</ParamField>
+
+<ParamField body="booking_window_min" type="integer" required>
+  Minimum advance booking time in minutes
+</ParamField>
+
+<ParamField body="booking_window_max" type="integer" required>
+  Maximum advance booking time in minutes
+</ParamField>
+
+<ParamField body="buffer_time" type="integer" required>
+  Buffer time between appointments in minutes
+</ParamField>
+
+<ParamField body="business_hours" type="object" required>
+  Map of day (0-6) to array of time slot objects with start_time and end_time
+</ParamField>
+
+## Get Normalized Business Hours
+
+<Note>
+Requires authentication. Accessible by Staff, Admin, and Owner roles.
+</Note>
+
+Get simplified business hours showing only the earliest start and latest end time for each day.
+
+```bash GET /api/v1/merchant/settings/business-hours/normalized
+curl -X GET 'https://api.example.com/api/v1/merchant/settings/business-hours/normalized' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns a map of day number to single time slot:
+
+```json
+{
+  "1": {"start_time": "09:00:00", "end_time": "17:00:00"},
+  "2": {"start_time": "09:00:00", "end_time": "17:00:00"}
+}
+```
+
+## Update Merchant Name
+
+<Warning>
+Requires Owner role only.
+</Warning>
+
+Update the merchant's business name.
+
+```bash PATCH /api/v1/merchant/name
+curl -X PATCH 'https://api.example.com/api/v1/merchant/name' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{"name": "New Business Name"}'
+```
+
+<ParamField body="name" type="string" required>
+  New merchant name
+</ParamField>
+
+## Check URL Availability
+
+<Note>
+Requires authentication. Accessible by Staff, Admin, and Owner roles.
+</Note>
+
+Check if a merchant URL name is available.
+
+```bash POST /api/v1/merchant/check-url
+curl -X POST 'https://api.example.com/api/v1/merchant/check-url' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{"merchant_name": "my-salon"}'
+```
+
+<ParamField body="merchant_name" type="string" required>
+  Desired URL-friendly merchant name
+</ParamField>
+
+Returns `200 OK` if available, or `409 Conflict` if already taken:
+
+```json
+{
+  "error": {
+    "message": "Merchant URL is not unique",
+    "merchant_url": "suggested-alternative"
+  }
+}
+```
+
+## Get Preferences
+
+<Note>
+Requires authentication. Accessible by Staff, Admin, and Owner roles.
+</Note>
+
+Retrieve calendar and display preferences.
+
+```bash GET /api/v1/merchant/preferences
+curl -X GET 'https://api.example.com/api/v1/merchant/preferences' \
+  --cookie "session_token=your_session_token"
+```
+
+<ResponseField name="first_day_of_week" type="string">
+  First day of week for calendar display (e.g., "monday", "sunday")
+</ResponseField>
+
+<ResponseField name="time_format" type="string">
+  Time format preference ("12h" or "24h")
+</ResponseField>
+
+<ResponseField name="calendar_view" type="string">
+  Default calendar view ("day", "week", "month")
+</ResponseField>
+
+<ResponseField name="calendar_view_mobile" type="string">
+  Mobile calendar view preference
+</ResponseField>
+
+<ResponseField name="start_hour" type="string">
+  Calendar start hour in HH:MM:SS format
+</ResponseField>
+
+<ResponseField name="end_hour" type="string">
+  Calendar end hour in HH:MM:SS format
+</ResponseField>
+
+<ResponseField name="time_frequency" type="string">
+  Time slot frequency in HH:MM:SS format
+</ResponseField>
+
+## Update Preferences
+
+<Note>
+Requires authentication. Accessible by Staff, Admin, and Owner roles.
+</Note>
+
+Update calendar and display preferences.
+
+```bash PATCH /api/v1/merchant/preferences
+curl -X PATCH 'https://api.example.com/api/v1/merchant/preferences' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "first_day_of_week": "monday",
+    "time_format": "24h",
+    "calendar_view": "week",
+    "calendar_view_mobile": "day",
+    "start_hour": "08:00:00",
+    "end_hour": "20:00:00",
+    "time_frequency": "00:15:00"
+  }'
+```
+
+<ParamField body="first_day_of_week" type="string" required>
+  First day of week for calendar
+</ParamField>
+
+<ParamField body="time_format" type="string" required>
+  Time format ("12h" or "24h")
+</ParamField>
+
+<ParamField body="calendar_view" type="string" required>
+  Default calendar view
+</ParamField>
+
+<ParamField body="calendar_view_mobile" type="string" required>
+  Mobile calendar view
+</ParamField>
+
+<ParamField body="start_hour" type="string" required>
+  Calendar start hour (HH:MM:SS)
+</ParamField>
+
+<ParamField body="end_hour" type="string" required>
+  Calendar end hour (HH:MM:SS)
+</ParamField>
+
+<ParamField body="time_frequency" type="string" required>
+  Time slot frequency (HH:MM:SS)
+</ParamField>
+
+## Delete Merchant
+
+<Warning>
+Requires Owner role only. This action is irreversible.
+</Warning>
+
+Permanently delete the merchant account and all associated data.
+
+```bash DELETE /api/v1/merchant
+curl -X DELETE 'https://api.example.com/api/v1/merchant' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns `200 OK` on successful deletion.

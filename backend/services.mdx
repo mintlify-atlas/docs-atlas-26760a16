@@ -1,0 +1,517 @@
+---
+title: Service Layer
+description: Business logic and service layer organization
+---
+
+## Overview
+
+The service layer (`backend/internal/service/`) implements the business logic of the application. Services orchestrate operations across multiple repositories, enforce business rules, and handle complex workflows.
+
+## Service Organization
+
+Each service is organized in its own package:
+
+```
+service/
+├── auth/              # Authentication and OAuth
+├── blockedtime/       # Employee availability
+├── booking/           # Booking management
+├── catalog/           # Services and categories
+├── customer/          # Customer management
+├── email/             # Email notifications
+├── externalcalendar/  # Calendar integration
+├── merchant/          # Merchant operations
+├── product/           # Product inventory
+└── team/              # Employee management
+```
+
+## Core Services
+
+### Booking Service
+
+Handles all booking-related operations including creation, cancellation, and recurring bookings.
+
+<CodeGroup>
+```go booking/booking.go
+type Service struct {
+    bookingRepo     domain.BookingRepository
+    catalogRepo     domain.CatalogRepository
+    merchantRepo    domain.MerchantRepository
+    userRepo        domain.UserRepository
+    customerRepo    domain.CustomerRepository
+    blockedTimeRepo domain.BlockedTimeRepository
+    mailer          email.Service
+    txManager       db.TransactionManager
+}
+
+func NewService(
+    booking domain.BookingRepository,
+    catalog domain.CatalogRepository,
+    merchant domain.MerchantRepository,
+    user domain.UserRepository,
+    customer domain.CustomerRepository,
+    blockedTime domain.BlockedTimeRepository,
+    mailer email.Service,
+    txManager db.TransactionManager,
+) *Service {
+    return &Service{
+        bookingRepo:     booking,
+        catalogRepo:     catalog,
+        merchantRepo:    merchant,
+        userRepo:        user,
+        customerRepo:    customer,
+        blockedTimeRepo: blockedTime,
+        mailer:          mailer,
+        txManager:       txManager,
+    }
+}
+```
+</CodeGroup>
+
+<Accordion title="Key Booking Operations">
+  **Creating a Booking**
+  
+  The booking creation process involves multiple steps:
+  
+  ```go
+  func (s *Service) newBooking(
+      ctx context.Context,
+      booking domain.Booking,
+      details domain.BookingDetails,
+      participants []domain.BookingParticipant,
+      servicePhases []domain.PublicServicePhase,
+  ) (int, error) {
+      var bookingId int
+      
+      err := s.txManager.WithTransaction(ctx, func(tx db.DBTX) error {
+          // 1. Create the booking
+          bookingId, err = s.bookingRepo.WithTx(tx).NewBooking(ctx, booking)
+          
+          // 2. Create booking phases based on service phases
+          bookingPhases := make([]domain.BookingPhase, len(servicePhases))
+          bookingStart := booking.FromDate
+          
+          for i, phase := range servicePhases {
+              phaseDuration := time.Duration(phase.Duration) * time.Minute
+              bookingEnd := bookingStart.Add(phaseDuration)
+              
+              bookingPhases[i] = domain.BookingPhase{
+                  BookingId:      bookingId,
+                  ServicePhaseId: phase.Id,
+                  FromDate:       bookingStart,
+                  ToDate:         bookingEnd,
+              }
+              bookingStart = bookingEnd
+          }
+          
+          // 3. Create booking details (pricing, participants)
+          details.BookingId = bookingId
+          err = s.bookingRepo.WithTx(tx).NewBookingDetails(ctx, details)
+          
+          // 4. Create participant records
+          for i := range participants {
+              participants[i].BookingId = bookingId
+          }
+          err = s.bookingRepo.WithTx(tx).NewBookingParticipants(ctx, participants)
+          
+          return nil
+      })
+      
+      return bookingId, err
+  }
+  ```
+</Accordion>
+
+<Accordion title="Recurring Bookings">
+  The system supports recurring bookings using RRULE (RFC 5545):
+  
+  ```go
+  import "github.com/teambition/rrule-go"
+  
+  // Create a booking series
+  type BookingSeries struct {
+      Id          int
+      BookingType types.BookingType
+      MerchantId  uuid.UUID
+      EmployeeId  int
+      ServiceId   int
+      LocationId  int
+      Rrule       string      // "FREQ=WEEKLY;BYDAY=MO,WE,FR"
+      Dstart      time.Time   // Start date
+      Timezone    string
+      IsActive    bool
+  }
+  
+  // Generate occurrences from RRULE
+  rule, _ := rrule.StrToRRule(series.Rrule)
+  occurrences := rule.Between(startDate, endDate, true)
+  ```
+</Accordion>
+
+### Merchant Service
+
+Manages merchant operations, dashboard statistics, and business settings.
+
+<CodeGroup>
+```go merchant/merchant.go
+type Service struct {
+    bookingRepo     domain.BookingRepository
+    catalogRepo     domain.CatalogRepository
+    merchantRepo    domain.MerchantRepository
+    customerRepo    domain.CustomerRepository
+    blockedTimeRepo domain.BlockedTimeRepository
+    teamRepo        domain.TeamRepository
+    productRepo     domain.ProductRepository
+    txManager       db.TransactionManager
+}
+
+func (s *Service) GetDashboard(
+    ctx context.Context,
+    date time.Time,
+    period int,
+) (domain.DashboardData, error) {
+    employee := jwt.MustGetEmployeeFromContext(ctx)
+    utcDate := date.UTC()
+    
+    var dashboard domain.DashboardData
+    
+    // Get latest and upcoming bookings
+    dashboard.LatestBookings, err = s.bookingRepo.GetLatestBookings(
+        ctx, employee.MerchantId, utcDate, 5,
+    )
+    
+    dashboard.UpcomingBookings, err = s.bookingRepo.GetUpcomingBookings(
+        ctx, employee.MerchantId, utcDate, 5,
+    )
+    
+    // Get statistics for the period
+    dashboard.Statistics, err = s.merchantRepo.GetDashboardStats(
+        ctx, employee.MerchantId, startDate, endDate, prevStartDate,
+    )
+    
+    return dashboard, nil
+}
+```
+</CodeGroup>
+
+<Accordion title="Dashboard Statistics">
+  The dashboard provides key metrics:
+  
+  - **Revenue** - Total revenue for the period with change percentage
+  - **Bookings** - Number of bookings with trend
+  - **Cancellations** - Cancellation count and rate
+  - **Average Duration** - Average booking duration
+  
+  All metrics include comparison to the previous period for trend analysis.
+</Accordion>
+
+### Customer Service
+
+Handles customer CRUD operations, blacklisting, and booking transfers.
+
+<CodeGroup>
+```go customer/customer.go
+type Service struct {
+    customerRepo domain.CustomerRepository
+    bookingRepo  domain.BookingRepository
+    txManager    db.TransactionManager
+}
+
+func (s *Service) New(ctx context.Context, input NewInput) error {
+    customerId, err := uuid.NewV7()
+    if err != nil {
+        return fmt.Errorf("unexpected error during creating customer id: %s", err)
+    }
+    
+    employee := jwt.MustGetEmployeeFromContext(ctx)
+    
+    return s.customerRepo.NewCustomer(ctx, employee.MerchantId, domain.Customer{
+        Id:          customerId,
+        FirstName:   input.FirstName,
+        LastName:    input.LastName,
+        Email:       input.Email,
+        PhoneNumber: input.PhoneNumber,
+        Birthday:    input.Birthday,
+        Note:        input.Note,
+    })
+}
+
+func (s *Service) Delete(ctx context.Context, customerId uuid.UUID) error {
+    employee := jwt.MustGetEmployeeFromContext(ctx)
+    
+    return s.txManager.WithTransaction(ctx, func(tx db.DBTX) error {
+        // Delete all appointments
+        err := s.bookingRepo.DeleteAppointmentsByCustomer(
+            ctx, customerId, employee.MerchantId,
+        )
+        if err != nil {
+            return err
+        }
+        
+        // Decrement participant count for classes/events
+        err = s.bookingRepo.DecrementEveryParticipantCountForCustomer(
+            ctx, customerId, employee.MerchantId,
+        )
+        if err != nil {
+            return err
+        }
+        
+        // Remove participant records
+        err = s.bookingRepo.DeleteParticipantByCustomer(
+            ctx, customerId, employee.MerchantId,
+        )
+        if err != nil {
+            return err
+        }
+        
+        // Finally delete the customer
+        return s.customerRepo.DeleteCustomer(ctx, customerId, employee.MerchantId)
+    })
+}
+```
+</CodeGroup>
+
+<Accordion title="Customer Blacklisting">
+  Merchants can blacklist problematic customers:
+  
+  ```go
+  func (s *Service) Blacklist(
+      ctx context.Context,
+      customerId uuid.UUID,
+      input BlacklistInput,
+  ) error {
+      employee := jwt.MustGetEmployeeFromContext(ctx)
+      
+      return s.customerRepo.SetBlacklistStatusForCustomer(
+          ctx,
+          employee.MerchantId,
+          customerId,
+          true,
+          input.BlacklistReason,
+      )
+  }
+  ```
+  
+  Blacklisted customers cannot make new bookings but existing bookings are preserved.
+</Accordion>
+
+<Accordion title="Booking Transfers">
+  Transfer bookings from dummy customers to registered users:
+  
+  ```go
+  func (s *Service) TransferBookings(
+      ctx context.Context,
+      input TransferBookingsInput,
+  ) error {
+      employee := jwt.MustGetEmployeeFromContext(ctx)
+      
+      return s.bookingRepo.TransferDummyBookings(
+          ctx,
+          employee.MerchantId,
+          input.FromCustomerId,
+          input.ToCustomerId,
+      )
+  }
+  ```
+</Accordion>
+
+### Catalog Service
+
+Manages services, service categories, and service phases.
+
+<CodeGroup>
+```go catalog/catalog.go
+type Service struct {
+    catalogRepo  domain.CatalogRepository
+    merchantRepo domain.MerchantRepository
+    txManager    db.TransactionManager
+}
+```
+</CodeGroup>
+
+### Auth Service
+
+Handles authentication, user registration, and OAuth flows.
+
+<CodeGroup>
+```go auth/auth.go
+type Service struct {
+    merchantRepo domain.MerchantRepository
+    userRepo     domain.UserRepository
+    teamRepo     domain.TeamRepository
+    txManager    db.TransactionManager
+}
+```
+</CodeGroup>
+
+<Accordion title="OAuth Integration">
+  Supports Google and Facebook OAuth:
+  
+  ```go auth/oauth.go
+  import "golang.org/x/oauth2"
+  
+  func (s *Service) GoogleOAuth(code string) (User, error) {
+      // Exchange code for token
+      token, err := googleOAuthConfig.Exchange(ctx, code)
+      
+      // Get user info from Google
+      userInfo, err := getUserInfoFromGoogle(token)
+      
+      // Find or create user
+      userId, err := s.userRepo.FindOauthUser(
+          ctx,
+          types.AuthProviderGoogle,
+          userInfo.Sub,
+      )
+      
+      if err != nil {
+          // Create new user
+          userId, err = s.createOAuthUser(ctx, userInfo)
+      }
+      
+      return userId, nil
+  }
+  ```
+</Accordion>
+
+## Service Patterns
+
+### Context-Based Authentication
+
+Services extract authentication data from context:
+
+<CodeGroup>
+```go
+import "github.com/miketsu-inc/reservations/backend/internal/api/middleware/jwt"
+
+// Get authenticated employee from context
+employee := jwt.MustGetEmployeeFromContext(ctx)
+
+// Use merchant ID for data isolation
+result, err := s.repo.GetData(ctx, employee.MerchantId)
+```
+</CodeGroup>
+
+### Transaction Coordination
+
+Complex operations use transactions:
+
+<CodeGroup>
+```go
+err := s.txManager.WithTransaction(ctx, func(tx db.DBTX) error {
+    // All repository operations within the same transaction
+    repo1 := s.repo1.WithTx(tx)
+    repo2 := s.repo2.WithTx(tx)
+    
+    err := repo1.Create(ctx, data1)
+    if err != nil {
+        return err // Transaction will rollback
+    }
+    
+    err = repo2.Update(ctx, data2)
+    return err // Transaction commits if no error
+})
+```
+</CodeGroup>
+
+### Input Validation
+
+Services define input structs for type-safe parameters:
+
+<CodeGroup>
+```go
+type NewInput struct {
+    FirstName   *string
+    LastName    *string
+    Email       *string
+    PhoneNumber *string
+    Birthday    *time.Time
+    Note        *string
+}
+
+func (s *Service) New(ctx context.Context, input NewInput) error {
+    // Validate and process input
+    // ...
+}
+```
+</CodeGroup>
+
+### Error Handling
+
+Services wrap errors with context:
+
+<CodeGroup>
+```go
+func (s *Service) Get(ctx context.Context, id uuid.UUID) (Customer, error) {
+    customer, err := s.customerRepo.GetCustomerInfo(ctx, merchantId, id)
+    if err != nil {
+        return Customer{}, fmt.Errorf(
+            "error while retrieving customer info for merchant: %s",
+            err.Error(),
+        )
+    }
+    return customer, nil
+}
+```
+</CodeGroup>
+
+## Email Service
+
+Handles transactional emails using Resend:
+
+<CodeGroup>
+```go email/email.go
+type Service struct {
+    resendApiKey string
+    enableEmails bool
+}
+
+func (s *Service) SendBookingConfirmation(
+    ctx context.Context,
+    bookingData domain.BookingEmailData,
+) error {
+    if !s.enableEmails {
+        return nil // Skip in dev/test
+    }
+    
+    // Send email to all participants
+    for _, participant := range bookingData.Participants {
+        // Render email template
+        // Send via Resend API
+    }
+}
+```
+</CodeGroup>
+
+## External Calendar Service
+
+Syncs with Google Calendar to block unavailable times:
+
+<CodeGroup>
+```go externalcalendar/sync.go
+func (s *Service) SyncCalendar(
+    ctx context.Context,
+    employeeId int,
+) error {
+    // Fetch events from Google Calendar
+    events, err := s.fetchGoogleCalendarEvents(ctx, employeeId)
+    
+    // Convert to blocked times
+    blockedTimes := convertEventsToBlockedTimes(events)
+    
+    // Update in database
+    return s.blockedTimeRepo.BulkInsertBlockedTime(ctx, blockedTimes)
+}
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Domain Models" icon="cube" href="/backend/domain-models">
+    Review the domain entities used by services
+  </Card>
+  <Card title="Repositories" icon="database" href="/backend/repositories">
+    See how services interact with data layer
+  </Card>
+</CardGroup>

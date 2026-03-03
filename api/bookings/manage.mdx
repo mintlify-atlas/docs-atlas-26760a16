@@ -1,0 +1,513 @@
+---
+title: "Managing Bookings"
+description: "Update, cancel, and retrieve booking information"
+---
+
+## Get Booking by Customer
+
+Customers can retrieve details about their bookings.
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.example.com/bookings/customer/123 \
+  -H "Authorization: Bearer TOKEN"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/bookings/customer/123', {
+  headers: {
+    'Authorization': 'Bearer TOKEN'
+  }
+});
+const booking = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.example.com/bookings/customer/123',
+    headers={'Authorization': 'Bearer TOKEN'}
+)
+booking = response.json()
+```
+</CodeGroup>
+
+### Response Fields
+
+<ResponseField name="from_date" type="timestamp" required>
+  Start date and time of the booking
+</ResponseField>
+
+<ResponseField name="to_date" type="timestamp" required>
+  End date and time of the booking
+</ResponseField>
+
+<ResponseField name="service_name" type="string" required>
+  Name of the booked service
+</ResponseField>
+
+<ResponseField name="cancel_deadline" type="integer" required>
+  Hours before booking when cancellation is allowed
+</ResponseField>
+
+<ResponseField name="formatted_location" type="string" required>
+  Human-readable location address
+</ResponseField>
+
+<ResponseField name="price" type="FormattedPrice" required>
+  Price information with currency formatting
+</ResponseField>
+
+<ResponseField name="price_type" type="string" required>
+  Type of pricing: `per_person`, `per_booking`, or `free`
+</ResponseField>
+
+<ResponseField name="merchant_name" type="string" required>
+  Name of the merchant providing the service
+</ResponseField>
+
+<ResponseField name="is_cancelled" type="boolean" required>
+  Whether the booking has been cancelled
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "from_date": "2026-03-15T14:00:00Z",
+  "to_date": "2026-03-15T15:00:00Z",
+  "service_name": "Deep Tissue Massage",
+  "cancel_deadline": 24,
+  "formatted_location": "123 Wellness St, Suite 200, San Francisco, CA 94102",
+  "price": {
+    "amount": 8500,
+    "currency": "USD",
+    "formatted": "$85.00"
+  },
+  "price_type": "per_person",
+  "merchant_name": "Spa Retreat",
+  "is_cancelled": false
+}
+```
+
+---
+
+## Update Booking by Merchant
+
+Merchants can update booking times and notes.
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.example.com/bookings/merchant/123 \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchant_note": "Client requested room with natural light",
+    "from_date": "2026-03-15T15:00:00Z",
+    "to_date": "2026-03-15T16:00:00Z"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/bookings/merchant/123', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': 'Bearer TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    merchant_note: 'Client requested room with natural light',
+    from_date: '2026-03-15T15:00:00Z',
+    to_date: '2026-03-15T16:00:00Z'
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.patch(
+    'https://api.example.com/bookings/merchant/123',
+    headers={
+        'Authorization': 'Bearer TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'merchant_note': 'Client requested room with natural light',
+        'from_date': '2026-03-15T15:00:00Z',
+        'to_date': '2026-03-15T16:00:00Z'
+    }
+)
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField path="merchant_note" type="string" required>
+  Internal notes about the booking. Can be an empty string to clear notes.
+</ParamField>
+
+<ParamField path="from_date" type="string" required>
+  New start date and time in ISO 8601 format (RFC3339)
+</ParamField>
+
+<ParamField path="to_date" type="string" required>
+  New end date and time in ISO 8601 format (RFC3339)
+</ParamField>
+
+### Response
+
+Returns `200 OK` on success with no response body.
+
+<Warning>
+  **Time Validation**: The system validates that the new time slot is available and doesn't conflict with other bookings or employee schedules.
+</Warning>
+
+---
+
+## Cancel Booking by Customer
+
+Customers can cancel their bookings before the cancellation deadline.
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.example.com/bookings/customer/123 \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "booking_id": 123,
+    "merchant_name": "spa-retreat"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/bookings/customer/123', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    booking_id: 123,
+    merchant_name: 'spa-retreat'
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.delete(
+    'https://api.example.com/bookings/customer/123',
+    headers={
+        'Authorization': 'Bearer TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'booking_id': 123,
+        'merchant_name': 'spa-retreat'
+    }
+)
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField path="booking_id" type="integer" required>
+  ID of the booking to cancel
+</ParamField>
+
+<ParamField path="merchant_name" type="string" required>
+  Unique identifier for the merchant
+</ParamField>
+
+### Response
+
+Returns `200 OK` on success with no response body.
+
+<Info>
+  **Cancellation Deadline**: The API enforces the service's cancellation deadline. Attempts to cancel after the deadline will result in an error.
+</Info>
+
+---
+
+## Cancel Booking by Merchant
+
+Merchants can cancel any booking with an optional reason.
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.example.com/bookings/merchant/123 \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cancellation_reason": "Employee called in sick, unable to provide service"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/bookings/merchant/123', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    cancellation_reason: 'Employee called in sick, unable to provide service'
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.delete(
+    'https://api.example.com/bookings/merchant/123',
+    headers={
+        'Authorization': 'Bearer TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'cancellation_reason': 'Employee called in sick, unable to provide service'
+    }
+)
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField path="cancellation_reason" type="string">
+  Reason for cancellation. Can be empty string but field must be present.
+</ParamField>
+
+### Response
+
+Returns `200 OK` on success with no response body.
+
+<Note>
+  When a merchant cancels a booking, the `cancelled_by_merchant_on` timestamp is recorded along with the cancellation reason.
+</Note>
+
+---
+
+## Get Calendar Events
+
+Retrieve all bookings and blocked times for a merchant's calendar view.
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.example.com/bookings/calendar/events?start=2026-03-01T00:00:00Z&end=2026-03-31T23:59:59Z" \
+  -H "Authorization: Bearer TOKEN"
+```
+
+```javascript JavaScript
+const start = '2026-03-01T00:00:00Z';
+const end = '2026-03-31T23:59:59Z';
+
+const response = await fetch(
+  `https://api.example.com/bookings/calendar/events?start=${start}&end=${end}`,
+  {
+    headers: {
+      'Authorization': 'Bearer TOKEN'
+    }
+  }
+);
+const events = await response.json();
+```
+
+```python Python
+import requests
+
+params = {
+    'start': '2026-03-01T00:00:00Z',
+    'end': '2026-03-31T23:59:59Z'
+}
+
+response = requests.get(
+    'https://api.example.com/bookings/calendar/events',
+    headers={'Authorization': 'Bearer TOKEN'},
+    params=params
+)
+events = response.json()
+```
+</CodeGroup>
+
+### Query Parameters
+
+<ParamField query="start" type="string" required>
+  Start of the date range in ISO 8601 format
+</ParamField>
+
+<ParamField query="end" type="string" required>
+  End of the date range in ISO 8601 format
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="bookings" type="array" required>
+  Array of booking details
+</ResponseField>
+
+<ResponseField name="bookings[].id" type="integer" required>
+  Booking ID
+</ResponseField>
+
+<ResponseField name="bookings[].from_date" type="timestamp" required>
+  Start date and time
+</ResponseField>
+
+<ResponseField name="bookings[].to_date" type="timestamp" required>
+  End date and time
+</ResponseField>
+
+<ResponseField name="bookings[].customer_note" type="string">
+  Note from the customer
+</ResponseField>
+
+<ResponseField name="bookings[].merchant_note" type="string">
+  Internal merchant note
+</ResponseField>
+
+<ResponseField name="bookings[].service_name" type="string" required>
+  Name of the service
+</ResponseField>
+
+<ResponseField name="bookings[].service_color" type="string" required>
+  Color code for calendar display
+</ResponseField>
+
+<ResponseField name="bookings[].service_duration" type="integer" required>
+  Duration in minutes
+</ResponseField>
+
+<ResponseField name="bookings[].price" type="FormattedPrice" required>
+  Price information
+</ResponseField>
+
+<ResponseField name="bookings[].cost" type="FormattedPrice" required>
+  Cost to merchant
+</ResponseField>
+
+<ResponseField name="bookings[].first_name" type="string">
+  Customer's first name
+</ResponseField>
+
+<ResponseField name="bookings[].last_name" type="string">
+  Customer's last name
+</ResponseField>
+
+<ResponseField name="bookings[].phone_number" type="string">
+  Customer's phone number
+</ResponseField>
+
+<ResponseField name="blocked_times" type="array" required>
+  Array of blocked time periods
+</ResponseField>
+
+<ResponseField name="blocked_times[].id" type="integer" required>
+  Blocked time ID
+</ResponseField>
+
+<ResponseField name="blocked_times[].employee_id" type="integer" required>
+  Employee this block applies to
+</ResponseField>
+
+<ResponseField name="blocked_times[].name" type="string" required>
+  Name/description of the blocked time
+</ResponseField>
+
+<ResponseField name="blocked_times[].from_date" type="timestamp" required>
+  Start of blocked period
+</ResponseField>
+
+<ResponseField name="blocked_times[].to_date" type="timestamp" required>
+  End of blocked period
+</ResponseField>
+
+<ResponseField name="blocked_times[].all_day" type="boolean" required>
+  Whether this is an all-day block
+</ResponseField>
+
+<ResponseField name="blocked_times[].icon" type="string">
+  Icon identifier for display
+</ResponseField>
+
+<ResponseField name="blocked_times[].blocked_type_id" type="integer">
+  Category ID for the blocked time
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "bookings": [
+    {
+      "id": 123,
+      "from_date": "2026-03-15T14:00:00Z",
+      "to_date": "2026-03-15T15:00:00Z",
+      "customer_note": "First time client",
+      "merchant_note": "Prefers quiet environment",
+      "service_name": "Deep Tissue Massage",
+      "service_color": "#4F46E5",
+      "service_duration": 60,
+      "price": {
+        "amount": 8500,
+        "currency": "USD",
+        "formatted": "$85.00"
+      },
+      "cost": {
+        "amount": 3000,
+        "currency": "USD",
+        "formatted": "$30.00"
+      },
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "phone_number": "+1234567890"
+    }
+  ],
+  "blocked_times": [
+    {
+      "id": 456,
+      "employee_id": 789,
+      "name": "Lunch Break",
+      "from_date": "2026-03-15T12:00:00Z",
+      "to_date": "2026-03-15T13:00:00Z",
+      "all_day": false,
+      "icon": "utensils",
+      "blocked_type_id": 1
+    }
+  ]
+}
+```
+
+<Info>
+  **Calendar Integration**: This endpoint is designed to provide all the data needed for a visual calendar interface, combining both bookings and unavailable time periods.
+</Info>
+
+---
+
+## Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| `400 Bad Request` | Invalid parameters or validation error |
+| `401 Unauthorized` | Missing or invalid authentication token |
+| `403 Forbidden` | Not authorized to access or modify this booking |
+| `404 Not Found` | Booking not found |
+| `409 Conflict` | Cannot cancel (past deadline or already cancelled) |
+
+---
+
+## Managing Participants
+
+For group bookings, participants are managed automatically:
+
+- **Adding Participants**: Customers join by creating a booking with the `booking_id` parameter
+- **Removing Participants**: Customers cancel their participation using the cancel endpoint
+- **Current Count**: The `current_participants` field tracks the number of active participants
+- **Capacity Limits**: Bookings enforce `min_participants` and `max_participants` constraints
+
+<Warning>
+  **Minimum Participants**: If a group booking falls below the minimum participant count after cancellations, the merchant may need to cancel the entire booking.
+</Warning>

@@ -1,0 +1,307 @@
+---
+title: 'Authentication'
+description: 'Learn how to authenticate with the API using JWT tokens and OAuth'
+---
+
+## Overview
+
+The API uses JWT (JSON Web Tokens) for authentication. The system supports multiple authentication methods:
+
+- **Email/Password** - Traditional login with credentials
+- **OAuth 2.0** - Google and Facebook social login
+- **Token Refresh** - Automatic token renewal
+
+## JWT Token System
+
+The API uses a dual-token system for enhanced security:
+
+### Access Token
+
+<ParamField name="jwt-access" type="cookie" required>
+  Short-lived token for authenticating API requests. Expires based on `JWT_ACCESS_EXP_MIN` configuration.
+</ParamField>
+
+- Stored in HTTP-only cookie named `jwt-access`
+- Used to authenticate protected endpoints
+- Expiration configured via `JWT_ACCESS_EXP_MIN` (in minutes)
+- Automatically included in requests via cookies
+
+### Refresh Token
+
+<ParamField name="jwt-refresh" type="cookie" required>
+  Long-lived token for obtaining new access tokens. Expires based on `JWT_REFRESH_EXP_MIN` configuration.
+</ParamField>
+
+- Stored in HTTP-only cookie named `jwt-refresh`
+- Used to obtain new access tokens when they expire
+- Expiration configured via `JWT_REFRESH_EXP_MIN` (in minutes)
+- Contains a `refresh_version` claim for invalidation support
+
+## Token Claims
+
+JWT tokens contain the following claims:
+
+<ResponseField name="sub" type="uuid" required>
+  The user ID (subject) of the authenticated user
+</ResponseField>
+
+<ResponseField name="exp" type="unix timestamp" required>
+  Token expiration time in Unix timestamp format
+</ResponseField>
+
+<ResponseField name="merchant_id" type="uuid">
+  The merchant ID, present only if the user is associated with a merchant
+</ResponseField>
+
+<ResponseField name="employee_id" type="integer">
+  The employee ID, present only if the user is a merchant employee
+</ResponseField>
+
+<ResponseField name="location_id" type="integer">
+  The location ID, present only if the user is assigned to a specific location
+</ResponseField>
+
+<ResponseField name="employee_role" type="string">
+  The employee's role (e.g., "owner", "admin", "staff"), present only for merchant employees
+</ResponseField>
+
+<ResponseField name="refresh_version" type="integer">
+  Version number for refresh token invalidation (refresh tokens only)
+</ResponseField>
+
+## Authentication Methods
+
+### Email and Password Login
+
+Authenticate using email and password credentials:
+
+```bash
+POST /api/v1/auth/login
+```
+
+<ParamField body="email" type="string" required>
+  User's email address (must be valid email format)
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password (ASCII characters only)
+</ParamField>
+
+**Example Request:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+**Response:** `200 OK`
+
+Sets `jwt-access` and `jwt-refresh` cookies with tokens. No response body.
+
+**Error Responses:**
+- `400` - Invalid request format or validation error
+- `401` - Invalid credentials
+
+### User Signup
+
+Create a new user account:
+
+```bash
+POST /api/v1/auth/users
+```
+
+<ParamField body="first_name" type="string" required>
+  User's first name
+</ParamField>
+
+<ParamField body="last_name" type="string" required>
+  User's last name
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Valid email address
+</ParamField>
+
+<ParamField body="phone_number" type="string" required>
+  Phone number in E.164 format (e.g., +12345678900)
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Password (ASCII characters only)
+</ParamField>
+
+**Example Request:**
+
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john.doe@example.com",
+  "phone_number": "+12125551234",
+  "password": "securePassword123"
+}
+```
+
+**Response:** `201 Created`
+
+Sets authentication cookies automatically.
+
+### OAuth 2.0 Authentication
+
+The API supports OAuth authentication with Google and Facebook.
+
+#### Google OAuth Flow
+
+**Step 1: Initiate OAuth**
+
+```bash
+GET /api/v1/auth/oauth/google
+```
+
+Redirects to Google's OAuth consent screen. An OAuth state cookie is set for security validation.
+
+**Step 2: Callback Handler**
+
+```bash
+GET /api/v1/auth/oauth/google/callback?code={authorization_code}
+```
+
+Google redirects here after user consent. The endpoint:
+1. Validates the OAuth state cookie
+2. Exchanges the authorization code for user info
+3. Creates or logs in the user
+4. Sets JWT tokens
+5. Redirects to `http://localhost:8080/`
+
+#### Facebook OAuth Flow
+
+**Step 1: Initiate OAuth**
+
+```bash
+GET /api/v1/auth/oauth/facebook
+```
+
+Redirects to Facebook's OAuth consent screen.
+
+**Step 2: Callback Handler**
+
+```bash
+GET /api/v1/auth/oauth/facebook/callback?code={authorization_code}
+```
+
+Works identically to Google callback.
+
+## Protected Endpoints
+
+Endpoints requiring authentication expect the JWT cookies to be included automatically by the browser.
+
+### Accessing User Information
+
+Within the backend (internal/api/middleware/jwt/jwt.go:42), authenticated user information is accessible via context:
+
+```go
+// Get user ID from context
+userID := jwt.MustGetUserIDFromContext(r.Context())
+
+// Get employee context (for merchant employees)
+employee := jwt.MustGetEmployeeFromContext(r.Context())
+```
+
+### Example Protected Endpoint
+
+```bash
+GET /api/v1/auth/me
+```
+
+Returns `200 OK` if authenticated, `401` if not.
+
+## Logout
+
+### Logout from Current Device
+
+```bash
+POST /api/v1/auth/logout
+```
+
+Deletes JWT cookies, effectively logging out the user from the current device.
+
+**Response:** `200 OK`
+
+### Logout from All Devices
+
+```bash
+POST /api/v1/auth/logout/all
+```
+
+Invalidates all refresh tokens by incrementing the user's `refresh_version`, forcing logout on all devices.
+
+**Response:** `200 OK`
+
+## Merchant Signup
+
+Authenticated users can create merchant accounts:
+
+```bash
+POST /api/v1/auth/merchants
+```
+
+<ParamField header="Cookie" type="string" required>
+  Must include valid `jwt-access` and `jwt-refresh` cookies
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Merchant business name
+</ParamField>
+
+<ParamField body="contact_email" type="string" required>
+  Business contact email
+</ParamField>
+
+<ParamField body="timezone" type="string" required>
+  Valid timezone identifier (e.g., "America/New_York")
+</ParamField>
+
+**Example Request:**
+
+```json
+{
+  "name": "My Business",
+  "contact_email": "contact@mybusiness.com",
+  "timezone": "America/New_York"
+}
+```
+
+**Response:** `201 Created`
+
+## Token Security
+
+All JWT tokens are:
+
+- **HTTP-Only** - Not accessible via JavaScript to prevent XSS attacks
+- **Signed** - Using HMAC-SHA256 with separate secrets for access and refresh tokens
+- **Time-Limited** - Configurable expiration times
+- **Domain-Scoped** - Set for `.reservations.local` domain (configure for production)
+- **SameSite** - Lax mode for CSRF protection
+
+<Note>
+In production, ensure `Secure` flag is enabled for cookies (currently disabled for local development).
+</Note>
+
+## Configuration
+
+Authentication requires these environment variables:
+
+| Variable | Description |
+|---------|-------------|
+| `JWT_ACCESS_SECRET` | Secret key for signing access tokens |
+| `JWT_ACCESS_EXP_MIN` | Access token expiration in minutes |
+| `JWT_REFRESH_SECRET` | Secret key for signing refresh tokens |
+| `JWT_REFRESH_EXP_MIN` | Refresh token expiration in minutes |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret |
+| `FACEBOOK_OAUTH_CLIENT_ID` | Facebook OAuth client ID |
+| `FACEBOOK_OAUTH_CLIENT_SECRET` | Facebook OAuth client secret |
+
+See backend/cmd/config/config.go:22 for full configuration.

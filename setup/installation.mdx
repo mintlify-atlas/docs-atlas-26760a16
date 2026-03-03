@@ -1,0 +1,133 @@
+---
+title: Installation
+description: Install prerequisites and dependencies for the Reservations application
+---
+
+## Prerequisites
+
+Before setting up the Reservations application, ensure you have the following tools installed on your system:
+
+<Steps>
+  <Step title="Install Node.js">
+    Download and install [Node.js](https://nodejs.org/en) (LTS version recommended)
+    
+    Verify installation:
+    ```bash
+    node --version
+    npm --version
+    ```
+  </Step>
+
+  <Step title="Install Go">
+    Download and install [Go](https://go.dev/) (version 1.19 or higher)
+    
+    Verify installation:
+    ```bash
+    go version
+    ```
+  </Step>
+
+  <Step title="Install Docker">
+    Download and install [Docker](https://www.docker.com/) for your operating system
+    
+    Verify installation:
+    ```bash
+    docker --version
+    docker ps
+    ```
+  </Step>
+
+  <Step title="Install Air">
+    Install [Air](https://github.com/air-verse/air) for hot-reloading during development
+    
+    ```bash
+    go install github.com/air-verse/air@latest
+    ```
+    
+    Verify installation:
+    ```bash
+    air -v
+    ```
+  </Step>
+
+  <Step title="Install Make">
+    Install [GNU Make](https://www.gnu.org/software/make/)
+    
+    <CodeGroup>
+    ```bash macOS
+    # Usually pre-installed, verify with:
+    make --version
+    ```
+    
+    ```bash Linux
+    sudo apt-get install build-essential  # Debian/Ubuntu
+    sudo yum install make                  # RedHat/CentOS
+    ```
+    
+    ```bash Windows
+    # Install via Chocolatey
+    choco install make
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Install Caddy">
+    Install [Caddy](https://caddyserver.com/) for reverse proxy during development
+    
+    Follow the installation instructions for your operating system on the [Caddy website](https://caddyserver.com/docs/install)
+    
+    Verify installation:
+    ```bash
+    caddy version
+    ```
+  </Step>
+
+  <Step title="Install golangci-lint (Optional)">
+    Install [golangci-lint](https://golangci-lint.run/) for local linting
+    
+    ```bash
+    # macOS
+    brew install golangci-lint
+    
+    # Linux and Windows
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+    ```
+    
+    Verify installation:
+    ```bash
+    golangci-lint --version
+    ```
+  </Step>
+</Steps>
+
+## Installing Dependencies
+
+Once all prerequisites are installed, navigate to the project root and install the application dependencies:
+
+<Steps>
+  <Step title="Install Node.js dependencies">
+    ```bash
+    npm install
+    ```
+    
+    This installs all frontend dependencies for the Jabulani and Tango applications.
+  </Step>
+
+  <Step title="Install Go dependencies">
+    ```bash
+    go mod tidy
+    ```
+    
+    This downloads and organizes all Go module dependencies for the backend.
+  </Step>
+</Steps>
+
+<Note>
+  After installing dependencies, proceed to the [Environment Configuration](/setup/environment) page to set up your environment variables.
+</Note>
+
+## Next Steps
+
+- [Configure environment variables](/setup/environment)
+- [Set up the database](/setup/database)
+- [Build the application](/setup/building)

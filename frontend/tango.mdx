@@ -1,0 +1,535 @@
+---
+title: Tango - Customer Booking Interface
+description: Customer-facing booking application for discovering services and making reservations
+---
+
+Tango is the customer-facing booking application that enables users to discover services, view availability, and make reservations with merchants.
+
+## Overview
+
+- **Port**: 5174
+- **Purpose**: Customer booking and reservation management
+- **Authentication**: Optional (guest booking supported)
+- **Tech Stack**: React 19, TanStack Router, TanStack Query, Tailwind CSS 4
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Service Discovery" icon="search">
+    Browse merchant services with detailed descriptions and pricing
+  </Card>
+  <Card title="Real-Time Availability" icon="clock">
+    View available time slots in real-time with calendar interface
+  </Card>
+  <Card title="Guest Booking" icon="user">
+    Make reservations without creating an account
+  </Card>
+  <Card title="Booking Management" icon="calendar-check">
+    View, modify, and cancel reservations
+  </Card>
+  <Card title="Multi-Phase Services" icon="list">
+    Book complex services with multiple phases and steps
+  </Card>
+  <Card title="Location Information" icon="map">
+    Interactive maps showing merchant locations
+  </Card>
+</CardGroup>
+
+## Technology Stack
+
+### Core Dependencies
+
+From `frontend/apps/tango/package.json`:
+
+Tango relies primarily on shared dependencies from the root workspace:
+
+- **React 19.2.3** - Latest React version
+- **TanStack Router 1.147.1** - File-based routing
+- **TanStack Query 5.90.16** - Server state management
+- **Tailwind CSS 4.1.18** - Styling
+- **mapbox-gl 3.17.0** - Interactive maps (from root package.json)
+- **react-day-picker 9.13.0** - Date selection component
+
+### Shared Packages
+
+- **@reservations/components** - Reusable UI components
+- **@reservations/lib** - Utilities and hooks
+- **@reservations/assets** - Icons and images (BackArrowIcon, etc.)
+
+## Application Structure
+
+### Route Organization
+
+<Tabs>
+  <Tab title="Overview">
+    Tango uses a merchant-scoped routing structure:
+
+    ```
+    routes/
+    ├── __root.jsx                    # Root layout
+    ├── index.jsx                     # Landing page
+    ├── login.jsx                     # Customer login
+    ├── signup/                       # Customer registration
+    └── m/$merchantName/              # Merchant-scoped routes
+        ├── index.jsx                 # Merchant profile
+        ├── services/$serviceId/      # Service details
+        ├── booking/                  # Booking flow
+        └── cancel/$bookingId/        # Cancellation flow
+    ```
+
+    All merchant-specific functionality is scoped under `/m/:merchantName` to support multi-tenancy.
+  </Tab>
+  <Tab title="Route Parameters">
+    Dynamic route parameters:
+
+    - **$merchantName** - Unique merchant identifier
+    - **$serviceId** - Service ID for service details
+    - **$bookingId** - Booking ID for cancellation
+
+    Example URLs:
+    - `/m/salon-luxe` - Merchant profile
+    - `/m/salon-luxe/services/123` - Service details
+    - `/m/salon-luxe/booking` - Booking flow
+    - `/m/salon-luxe/cancel/456` - Cancel booking
+  </Tab>
+  <Tab title="Route Details">
+    Complete route structure:
+
+    ```
+    m/$merchantName/
+    ├── index.jsx                     # Merchant landing page
+    ├── -components/
+    │   ├── MapboxMap.jsx            # Location map
+    │   ├── ReservationSection.jsx   # Booking preview
+    │   ├── ServiceCategoryItem.jsx  # Category display
+    │   └── ServiceItem.jsx          # Service card
+    ├── services/$serviceId/
+    │   ├── index.jsx                # Service detail page
+    │   └── -components/
+    │       ├── PhaseItem.jsx        # Multi-phase service steps
+    │       └── DropDownBusinessHours.jsx
+    ├── booking/
+    │   ├── index.jsx                # Booking creation
+    │   ├── completed.jsx            # Confirmation page
+    │   └── -components/
+    │       └── AvailableTimeSection.jsx
+    └── cancel/$bookingId/
+        ├── index.jsx                # Cancellation form
+        └── completed.jsx            # Cancellation confirmation
+    ```
+  </Tab>
+</Tabs>
+
+## Customer Journey
+
+### User Authentication
+
+Tango supports both authenticated and guest users:
+
+<Tabs>
+  <Tab title="Guest Flow">
+    Users can book without an account:
+    1. Browse merchant services
+    2. Select service and time
+    3. Enter contact information
+    4. Receive booking confirmation via email
+    5. Use booking link for management
+  </Tab>
+  <Tab title="Login">
+    **Route**: `/login.jsx`
+
+    Returning customers can:
+    - Sign in with email/password
+    - View booking history
+    - Manage profile information
+    - Save preferences
+  </Tab>
+  <Tab title="Registration">
+    **Route**: `/signup/`
+
+    Multi-step registration process:
+
+    <Steps>
+      <Step title="Email">
+        EmailForm component:
+        - Email validation
+        - Duplicate check
+        - Verification code sent
+      </Step>
+      <Step title="Personal Info">
+        NameForm component:
+        - First and last name
+        - Optional middle name
+      </Step>
+      <Step title="Phone">
+        PhoneNumberForm component:
+        - Phone number with validation
+        - SMS verification option
+      </Step>
+      <Step title="Password">
+        PasswordForm component:
+        - Secure password creation
+        - Password strength indicator
+        - Confirmation field
+      </Step>
+      <Step title="Complete">
+        SubmissionCompleted component:
+        - Account created confirmation
+        - Email verification prompt
+        - Redirect to booking or profile
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Booking Flow
+
+### Merchant Discovery
+
+**Route**: `/m/$merchantName/index.jsx`
+
+Merchant profile page with:
+
+<Steps>
+  <Step title="Business Information">
+    - Merchant name and description
+    - Business hours display
+    - Contact information
+    - Location with interactive map (MapboxMap)
+  </Step>
+  <Step title="Service Catalog">
+    ServiceCategoryItem components:
+    - Services organized by category
+    - ServiceItem cards with:
+      - Service name and description
+      - Duration and pricing
+      - Quick booking button
+  </Step>
+  <Step title="Recent Reservations">
+    ReservationSection component:
+    - Upcoming bookings (for logged-in users)
+    - Booking history preview
+    - Quick actions (modify, cancel)
+  </Step>
+</Steps>
+
+### Service Details
+
+**Route**: `/m/$merchantName/services/$serviceId/index.jsx`
+
+Detailed service information:
+
+- **Service Overview**
+  - Full description
+  - Pricing details
+  - Duration and capacity
+  - Employee information
+
+- **Multi-Phase Services**
+  - PhaseItem components for each phase
+  - Phase descriptions and durations
+  - Prerequisites and dependencies
+  - Total service time calculation
+
+- **Business Hours**
+  - DropDownBusinessHours component
+  - Weekly schedule display
+  - Special hours and holidays
+  - Availability indicators
+
+- **Booking Action**
+  - Prominent "Book Now" button
+  - Redirects to booking flow with service pre-selected
+
+### Booking Creation
+
+**Route**: `/m/$merchantName/booking/index.jsx`
+
+Interactive booking creation:
+
+<Steps>
+  <Step title="Service Selection">
+    If not pre-selected:
+    - Browse available services
+    - View pricing and duration
+    - Select service to continue
+  </Step>
+  <Step title="Date Selection">
+    SmallCalendar component from `@reservations/components`:
+    - Month view calendar
+    - Available dates highlighted
+    - Blocked dates shown in gray
+    - Navigate between months
+  </Step>
+  <Step title="Time Selection">
+    AvailableTimeSection component:
+    - Fetches real-time availability
+    - Displays available time slots
+    - Shows time slot duration
+    - Indicates employee (if applicable)
+    - Handles multi-phase scheduling
+  </Step>
+  <Step title="Customer Information">
+    For guests:
+    - Name input fields
+    - Email (required for confirmation)
+    - Phone number
+    - Optional notes/requests
+
+    For logged-in users:
+    - Pre-filled contact info
+    - Option to update details
+    - Add special requests
+  </Step>
+  <Step title="Review & Confirm">
+    - Summary of booking details
+    - Service, date, time confirmation
+    - Customer information review
+    - Final pricing display
+    - Terms and conditions
+    - Submit booking button
+  </Step>
+</Steps>
+
+### Booking Confirmation
+
+**Route**: `/m/$merchantName/booking/completed.jsx`
+
+Post-booking confirmation page:
+
+- Booking success message
+- Booking reference number
+- Service details summary
+- Date and time confirmation
+- Add to calendar options
+- Email confirmation notice
+- Cancellation policy information
+- Link to manage booking
+
+### Availability Engine
+
+The booking flow uses TanStack Query to fetch availability:
+
+```javascript
+// From booking/index.jsx
+async function fetchHours(merchantName, locationId, serviceId, start, end) {
+  const response = await fetch(
+    `/api/v1/merchants/${merchantName}/locations/${locationId}/services/${serviceId}/availability?start=${start}&end=${end}`
+  );
+  // Returns available time slots
+}
+```
+
+**Features**:
+- Real-time availability checking
+- Handles multi-phase services
+- Employee-specific availability
+- Buffer time calculation
+- Blocked time periods
+- Business hours compliance
+
+## Booking Management
+
+### Cancellation Flow
+
+**Route**: `/m/$merchantName/cancel/$bookingId/`
+
+<Steps>
+  <Step title="Cancellation Request">
+    `index.jsx` - Cancellation form:
+    - Booking details display
+    - Cancellation policy reminder
+    - Reason for cancellation (optional)
+    - Refund information (if applicable)
+    - Confirm cancellation button
+  </Step>
+  <Step title="Cancellation Confirmation">
+    `completed.jsx` - Confirmation page:
+    - Cancellation success message
+    - Refund details (if applicable)
+    - Email confirmation notice
+    - Option to book again
+  </Step>
+</Steps>
+
+## Key Components
+
+### Merchant Page Components
+
+- **MapboxMap** - Interactive location map using Mapbox GL
+- **ReservationSection** - User's upcoming and past reservations
+- **ServiceCategoryItem** - Service category display with services
+- **ServiceItem** - Individual service card with booking action
+
+### Service Detail Components
+
+- **PhaseItem** - Multi-phase service step display
+- **DropDownBusinessHours** - Expandable business hours schedule
+
+### Booking Components
+
+- **AvailableTimeSection** - Real-time time slot availability
+- **SmallCalendar** - Date picker from `@reservations/components`
+- Uses shared components: Button, Loading, ServerError, Textarea
+
+### Signup Components
+
+- **EmailForm** - Email validation and verification
+- **NameForm** - Name input fields
+- **PhoneNumberForm** - Phone number with validation
+- **PasswordForm** - Secure password creation
+- **SubmissionCompleted** - Registration success
+
+### Shared Components
+
+From `@reservations/components`:
+
+- **Button** - Primary action buttons
+- **Loading** - Loading states
+- **ServerError** - Error handling
+- **SmallCalendar** - Date selection
+- **Textarea** - Multi-line text input
+
+### Shared Assets
+
+From `@reservations/assets`:
+
+- **BackArrowIcon** - Navigation back button
+
+## Data Fetching
+
+Tango uses TanStack Query with the following patterns:
+
+```javascript
+import { useQuery, queryOptions, keepPreviousData } from '@tanstack/react-query';
+
+// Example from booking/index.jsx
+const { data, isLoading, isError } = useQuery({
+  queryKey: ['availability', merchantName, serviceId, start, end],
+  queryFn: () => fetchHours(merchantName, locationId, serviceId, start, end),
+  placeholderData: keepPreviousData,
+});
+```
+
+**Key Patterns**:
+- Query keys with dependencies
+- Placeholder data for smooth transitions
+- Error handling with ServerError component
+- Loading states with Loading component
+- Automatic refetching and caching
+
+## API Integration
+
+### Endpoints Used
+
+- `GET /api/v1/merchants/:merchantName` - Merchant profile
+- `GET /api/v1/merchants/:merchantName/services` - Service listing
+- `GET /api/v1/merchants/:merchantName/services/:serviceId` - Service details
+- `GET /api/v1/merchants/:merchantName/locations/:locationId/services/:serviceId/availability` - Time slot availability
+- `POST /api/v1/bookings` - Create booking
+- `DELETE /api/v1/bookings/:bookingId` - Cancel booking
+- `GET /api/v1/customers/bookings` - User booking history
+
+### Error Handling
+
+```javascript
+if (isError) {
+  return <ServerError />;
+}
+```
+
+All API errors display the shared `ServerError` component from `@reservations/components`.
+
+## Utilities from @reservations/lib
+
+Tango uses several utilities from the shared lib package:
+
+- **formatToDateString** - Format dates for display
+- **GetDayPickerWindow** - Calculate date picker range
+- **getDisplayPrice** - Format prices for display
+- **invalidateLocalStorageAuth** - Handle auth token expiration
+
+## Development
+
+### Running Tango
+
+```bash
+# Start development server on port 5174
+npm run dev-tango
+
+# Build for production
+npm run build-tango
+```
+
+### Development Features
+
+- Hot module replacement (HMR)
+- API proxy to backend at `/api`
+- Local domain support (`.reservations.local`)
+- React DevTools integration
+- TanStack Query DevTools for debugging queries
+
+### Testing Flows
+
+<Tabs>
+  <Tab title="Guest Booking">
+    1. Navigate to `/m/[merchant-name]`
+    2. Select a service
+    3. Choose date and time
+    4. Enter guest information
+    5. Confirm booking
+  </Tab>
+  <Tab title="Authenticated Booking">
+    1. Login at `/login`
+    2. Navigate to merchant
+    3. Select service
+    4. Choose date and time
+    5. Review pre-filled info
+    6. Confirm booking
+  </Tab>
+  <Tab title="Cancellation">
+    1. Access booking via email link or account
+    2. Navigate to `/m/[merchant]/cancel/[booking-id]`
+    3. Review booking details
+    4. Confirm cancellation
+  </Tab>
+</Tabs>
+
+## User Experience
+
+### Mobile-First Design
+
+Tango is optimized for mobile devices:
+
+- Touch-friendly interface
+- Responsive layouts with Tailwind CSS
+- Optimized calendar interactions
+- Fast loading times
+- Minimal data usage
+
+### Performance Optimizations
+
+- Code splitting with TanStack Router
+- Query caching with TanStack Query
+- Optimistic UI updates
+- Lazy loading of components
+- Image optimization
+
+### Accessibility
+
+- Semantic HTML structure
+- ARIA labels on interactive elements
+- Keyboard navigation support
+- Screen reader friendly
+- High contrast text
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Frontend Overview" icon="code" href="/frontend/overview">
+    Learn about the frontend monorepo architecture
+  </Card>
+  <Card title="Jabulani Dashboard" icon="store" href="/frontend/jabulani">
+    Explore the merchant dashboard application
+  </Card>
+</CardGroup>

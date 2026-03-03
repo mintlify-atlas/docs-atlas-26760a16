@@ -1,0 +1,165 @@
+---
+title: Locations
+description: Manage business location information
+---
+
+Manage your business locations including addresses and geographic coordinates.
+
+## Create Location
+
+<Note>
+Requires authentication.
+</Note>
+
+Create a new business location with address and geographic information.
+
+```bash POST /api/v1/merchant/locations
+curl -X POST 'https://api.example.com/api/v1/merchant/locations' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "country": "United States",
+    "city": "San Francisco",
+    "postal_code": "94102",
+    "address": "123 Market St",
+    "geo_point": {
+      "latitude": 37.7749,
+      "longitude": -122.4194
+    },
+    "place_id": "ChIJIQBpAG2ahYAR_6128GcTUEo",
+    "formatted_location": "123 Market St, San Francisco, CA 94102, USA",
+    "is_primary": true,
+    "is_active": true
+  }'
+```
+
+<ParamField body="country" type="string" optional>
+  Country name
+</ParamField>
+
+<ParamField body="city" type="string" optional>
+  City name
+</ParamField>
+
+<ParamField body="postal_code" type="string" optional>
+  Postal or ZIP code
+</ParamField>
+
+<ParamField body="address" type="string" optional>
+  Street address
+</ParamField>
+
+<ParamField body="geo_point" type="object" required>
+  Geographic coordinates
+  <Expandable title="Properties">
+    <ParamField body="latitude" type="number" required>
+      Latitude coordinate
+    </ParamField>
+    <ParamField body="longitude" type="number" required>
+      Longitude coordinate
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="place_id" type="string" optional>
+  Google Places ID or similar identifier
+</ParamField>
+
+<ParamField body="formatted_location" type="string" required>
+  Complete formatted address for display
+</ParamField>
+
+<ParamField body="is_primary" type="boolean" required>
+  Whether this is the primary business location
+</ParamField>
+
+<ParamField body="is_active" type="boolean" required>
+  Whether this location is currently active
+</ParamField>
+
+### Response
+
+Returns `201 Created` on successful location creation.
+
+## Location Data Model
+
+Locations are referenced in merchant settings and appear in customer-facing booking flows. The primary location is displayed on the merchant's public page.
+
+### Geographic Point
+
+The `geo_point` object contains latitude and longitude coordinates:
+
+```json
+{
+  "latitude": 37.7749,
+  "longitude": -122.4194
+}
+```
+
+These coordinates can be used for:
+- Displaying the location on a map
+- Calculating distance for customers
+- Location-based search and filtering
+
+### Formatted Location
+
+The `formatted_location` field should contain a human-readable complete address:
+
+```
+123 Market St, San Francisco, CA 94102, USA
+```
+
+This is displayed to customers during booking and in confirmation emails.
+
+## Primary vs Multiple Locations
+
+While the current API supports creating locations, the merchant settings endpoint returns the primary location information. The `is_primary` flag designates which location is shown by default.
+
+Future versions may support:
+- Multiple active locations
+- Location-specific services
+- Location-based team member assignments
+- Service availability by location
+
+## Best Practices
+
+### Address Validation
+
+When creating locations:
+
+1. Use a geocoding service (like Google Maps API) to validate addresses
+2. Obtain the `place_id` from the geocoding service
+3. Use the service's formatted address for consistency
+4. Store exact latitude/longitude coordinates
+
+### Example with Google Maps
+
+```javascript
+// Pseudocode for location creation with Google Maps
+const result = await googleMaps.geocode('123 Market St, San Francisco');
+
+const location = {
+  country: result.country,
+  city: result.city,
+  postal_code: result.postalCode,
+  address: result.streetAddress,
+  geo_point: {
+    latitude: result.lat,
+    longitude: result.lng
+  },
+  place_id: result.placeId,
+  formatted_location: result.formattedAddress,
+  is_primary: true,
+  is_active: true
+};
+```
+
+### Updating Locations
+
+Currently, the API supports creating new locations. To update location information:
+
+1. Create a new location with updated details
+2. Set `is_primary: true` on the new location
+3. The merchant settings will reflect the new primary location
+
+Note: Location update and delete endpoints may be added in future versions.

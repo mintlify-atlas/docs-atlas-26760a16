@@ -1,0 +1,176 @@
+---
+title: "Booking API Overview"
+description: "Introduction to the Booking API for managing appointments, events, and classes"
+---
+
+## Introduction
+
+The Booking API provides comprehensive endpoints for creating and managing bookings in your reservation system. It supports multiple booking types and workflows for both customers and merchants.
+
+## Booking Types
+
+The API supports three types of bookings:
+
+<CardGroup cols={3}>
+  <Card title="Appointment" icon="calendar-check">
+    One-on-one bookings between a customer and a service provider
+  </Card>
+  <Card title="Event" icon="calendar-star">
+    Single-occurrence group bookings for special occasions
+  </Card>
+  <Card title="Class" icon="users">
+    Recurring group bookings for scheduled classes or sessions
+  </Card>
+</CardGroup>
+
+## Booking Statuses
+
+Bookings progress through several statuses during their lifecycle:
+
+| Status | Description |
+|--------|-------------|
+| `booked` | Initial booking created |
+| `confirmed` | Booking confirmed by merchant or customer |
+| `completed` | Service completed successfully |
+| `cancelled` | Booking cancelled by merchant or customer |
+| `no-show` | Customer did not show up for the booking |
+
+## Booking Workflows
+
+### Customer Workflow
+
+Customers can:
+- Create bookings for appointments or join group bookings (events/classes)
+- View their booking details
+- Cancel bookings before the cancellation deadline
+
+### Merchant Workflow
+
+Merchants have full control over bookings:
+- Create bookings for any customer
+- Update booking times and notes
+- Cancel bookings with a reason
+- View all bookings in a calendar view
+
+## Core Data Model
+
+A booking consists of the following core fields:
+
+<ResponseField name="id" type="integer" required>
+  Unique booking identifier
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Current booking status: `booked`, `confirmed`, `completed`, `cancelled`, or `no-show`
+</ResponseField>
+
+<ResponseField name="booking_type" type="string" required>
+  Type of booking: `appointment`, `event`, or `class`
+</ResponseField>
+
+<ResponseField name="is_recurring" type="boolean" required>
+  Whether this booking is part of a recurring series
+</ResponseField>
+
+<ResponseField name="merchant_id" type="uuid" required>
+  ID of the merchant providing the service
+</ResponseField>
+
+<ResponseField name="employee_id" type="integer">
+  ID of the assigned employee (for appointments)
+</ResponseField>
+
+<ResponseField name="service_id" type="integer" required>
+  ID of the service being booked
+</ResponseField>
+
+<ResponseField name="location_id" type="integer" required>
+  ID of the location where service is provided
+</ResponseField>
+
+<ResponseField name="from_date" type="timestamp" required>
+  Start date and time of the booking
+</ResponseField>
+
+<ResponseField name="to_date" type="timestamp" required>
+  End date and time of the booking
+</ResponseField>
+
+<ResponseField name="booking_series_id" type="integer">
+  ID of the recurring booking series (if recurring)
+</ResponseField>
+
+## Booking Details
+
+Each booking has associated details for pricing and participants:
+
+<ResponseField name="price_per_person" type="Price" required>
+  Price charged per participant
+</ResponseField>
+
+<ResponseField name="cost_per_person" type="Price" required>
+  Cost to merchant per participant
+</ResponseField>
+
+<ResponseField name="total_price" type="Price" required>
+  Total price for the booking
+</ResponseField>
+
+<ResponseField name="total_cost" type="Price" required>
+  Total cost for the booking
+</ResponseField>
+
+<ResponseField name="min_participants" type="integer" required>
+  Minimum number of participants required
+</ResponseField>
+
+<ResponseField name="max_participants" type="integer" required>
+  Maximum number of participants allowed
+</ResponseField>
+
+<ResponseField name="current_participants" type="integer" required>
+  Current number of registered participants
+</ResponseField>
+
+<ResponseField name="merchant_note" type="string">
+  Internal notes from the merchant
+</ResponseField>
+
+<ResponseField name="cancelled_by_merchant_on" type="timestamp">
+  When the merchant cancelled the booking
+</ResponseField>
+
+<ResponseField name="cancellation_reason" type="string">
+  Reason provided for cancellation
+</ResponseField>
+
+## Recurring Bookings
+
+Recurring bookings (classes) follow the iCalendar recurrence rule (RRULE) format:
+
+<ResponseField name="rrule" type="string" required>
+  iCalendar recurrence rule defining the pattern
+</ResponseField>
+
+<ResponseField name="dstart" type="timestamp" required>
+  Start date of the recurring series
+</ResponseField>
+
+<ResponseField name="timezone" type="string" required>
+  Timezone for the recurring series
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean" required>
+  Whether the recurring series is still active
+</ResponseField>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Bookings" icon="plus" href="/api/bookings/create">
+    Learn how to create appointments and group bookings
+  </Card>
+  <Card title="Manage Bookings" icon="pen-to-square" href="/api/bookings/manage">
+    Update, cancel, and manage existing bookings
+  </Card>
+</CardGroup>

@@ -1,0 +1,280 @@
+---
+title: Team
+description: Manage team members and employee roles
+---
+
+Manage team members, their roles, and availability for service delivery.
+
+## Create Team Member
+
+<Note>
+Requires authentication.
+</Note>
+
+Add a new team member to your merchant account.
+
+```bash POST /api/v1/merchant/team
+curl -X POST 'https://api.example.com/api/v1/merchant/team' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "role": "staff",
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "email": "jane@example.com",
+    "phone_number": "+1234567890",
+    "is_active": true
+  }'
+```
+
+<ParamField body="role" type="string" required>
+  Employee role: "owner", "admin", or "staff"
+</ParamField>
+
+<ParamField body="first_name" type="string" required>
+  First name
+</ParamField>
+
+<ParamField body="last_name" type="string" required>
+  Last name
+</ParamField>
+
+<ParamField body="email" type="string" optional>
+  Email address
+</ParamField>
+
+<ParamField body="phone_number" type="string" optional>
+  Phone number
+</ParamField>
+
+<ParamField body="is_active" type="boolean" required>
+  Whether the team member is currently active
+</ParamField>
+
+### Response
+
+Returns `201 Created` on success.
+
+## Update Team Member
+
+<Note>
+Requires authentication.
+</Note>
+
+Update a team member's information.
+
+```bash PUT /api/v1/merchant/team/{id}
+curl -X PUT 'https://api.example.com/api/v1/merchant/team/5' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "role": "admin",
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "email": "jane.smith@example.com",
+    "phone_number": "+1234567890",
+    "is_active": true
+  }'
+```
+
+<ParamField path="id" type="integer" required>
+  Team member ID
+</ParamField>
+
+Body parameters are the same as create.
+
+## Delete Team Member
+
+<Note>
+Requires authentication.
+</Note>
+
+Remove a team member from your merchant account.
+
+```bash DELETE /api/v1/merchant/team/{id}
+curl -X DELETE 'https://api.example.com/api/v1/merchant/team/5' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="integer" required>
+  Team member ID to delete
+</ParamField>
+
+<Warning>
+Deleting team members with scheduled bookings may affect existing appointments.
+</Warning>
+
+## Get Team Member
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve details for a specific team member.
+
+```bash GET /api/v1/merchant/team/{id}
+curl -X GET 'https://api.example.com/api/v1/merchant/team/5' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="integer" required>
+  Team member ID
+</ParamField>
+
+<ResponseField name="id" type="integer">
+  Team member ID
+</ResponseField>
+
+<ResponseField name="role" type="string">
+  Employee role ("owner", "admin", or "staff")
+</ResponseField>
+
+<ResponseField name="first_name" type="string" optional>
+  First name
+</ResponseField>
+
+<ResponseField name="last_name" type="string" optional>
+  Last name
+</ResponseField>
+
+<ResponseField name="email" type="string" optional>
+  Email address
+</ResponseField>
+
+<ResponseField name="phone_number" type="string" optional>
+  Phone number
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Active status
+</ResponseField>
+
+## Get All Team Members
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve all team members for the merchant.
+
+```bash GET /api/v1/merchant/team
+curl -X GET 'https://api.example.com/api/v1/merchant/team' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns an array of team member objects with the same structure as the individual get endpoint.
+
+## Team Roles
+
+### Owner
+
+Owners have full access to all merchant operations:
+- Delete the merchant account
+- Update merchant name
+- Manage all settings
+- Full CRUD on all resources
+- Manage team members and roles
+
+### Admin
+
+Admins have management access:
+- Manage settings (except merchant name)
+- Full CRUD on services, products, customers
+- Manage team members (excluding owners)
+- Access all reporting and analytics
+
+### Staff
+
+Staff have limited access:
+- View dashboard and reports
+- View settings (read-only)
+- Limited customer management
+- Cannot modify team or merchant settings
+
+## Calendar Team Members
+
+Get a simplified list of team members for calendar display:
+
+```bash GET /api/v1/merchant/calendar/team
+curl -X GET 'https://api.example.com/api/v1/merchant/calendar/team' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns a minimal array:
+
+```json
+[
+  {
+    "id": 1,
+    "first_name": "John",
+    "last_name": "Doe"
+  },
+  {
+    "id": 2,
+    "first_name": "Jane",
+    "last_name": "Smith"
+  }
+]
+```
+
+This endpoint is optimized for populating calendar filters and assignment dropdowns.
+
+## Best Practices
+
+### Role Assignment
+
+1. **Limit Owners**: Only assign owner role to trusted individuals
+2. **Admin for Managers**: Use admin role for day-to-day managers
+3. **Staff for Service Providers**: Assign staff role to service providers
+
+### Active Status
+
+Use `is_active` to:
+- Temporarily disable team members without deleting
+- Preserve historical booking data
+- Prevent new assignments while keeping old data
+
+```javascript
+// Disable a team member on leave
+PUT /api/v1/merchant/team/5
+{
+  "is_active": false,
+  // ... other fields unchanged
+}
+```
+
+### Contact Information
+
+While email and phone are optional:
+- Include email for team members who need login access
+- Add phone numbers for scheduling and communication
+- Keep contact info updated for team coordination
+
+## Team Member Scheduling
+
+Team members appear in:
+1. **Booking assignments**: Customers can select preferred team members
+2. **Calendar views**: Filter and view by team member
+3. **Blocked times**: Set individual unavailability (see [Blocked Times](/api/merchant/blocked-times))
+4. **Service delivery**: Track who performed each service
+
+### Example Workflow
+
+```bash
+# 1. Create team member
+POST /api/v1/merchant/team
+{"first_name": "Sarah", "last_name": "Johnson", "role": "staff", "is_active": true}
+
+# 2. Team member ID returned: 10
+
+# 3. Create blocked time for their vacation
+POST /api/v1/merchant/blocked-times
+{
+  "name": "Vacation",
+  "from_date": "2026-04-01T00:00:00Z",
+  "to_date": "2026-04-07T23:59:59Z",
+  "all_day": true
+}
+
+# 4. Bookings will automatically exclude this team member during vacation
+```

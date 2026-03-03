@@ -1,0 +1,287 @@
+---
+title: Booking Management
+description: Create, modify, and manage customer bookings with flexible scheduling options and recurring appointments
+---
+
+Manage all aspects of customer bookings, from creating one-time appointments to setting up recurring class schedules.
+
+## Creating a New Booking
+
+Create bookings for customers through an intuitive step-by-step interface:
+
+<Steps>
+  <Step title="Select a Service">
+    Choose from your available services. Each service displays:
+    - Service name and color
+    - Duration
+    - Price
+    - Booking type (1-on-1 appointment or group class)
+  </Step>
+  
+  <Step title="Add Customer (Optional)">
+    Link the booking to a customer profile or leave empty for walk-in appointments. For group classes, add multiple participants.
+  </Step>
+  
+  <Step title="Set Date and Time">
+    Pick the appointment date and start time. The end time is automatically calculated based on the service duration.
+  </Step>
+  
+  <Step title="Configure Recurrence (Optional)">
+    Set up recurring bookings with flexible scheduling rules.
+  </Step>
+  
+  <Step title="Add Notes">
+    Include merchant notes for internal reference about the booking.
+  </Step>
+</Steps>
+
+## Booking Types
+
+<Tabs>
+  <Tab title="One-on-One Appointments">
+    Individual bookings with a single customer:
+    
+    - Assigned to one customer at a time
+    - Can be linked to a customer profile or left as walk-in
+    - Price is fixed per appointment
+    - Full scheduling flexibility
+  </Tab>
+  
+  <Tab title="Group Classes">
+    Multi-participant bookings:
+    
+    - Add multiple customers to a single booking
+    - Set minimum and maximum participant limits
+    - Price per person or fixed price for the entire class
+    - Manage participant list with add/remove capabilities
+    - Track current vs. maximum capacity
+  </Tab>
+</Tabs>
+
+## Customer Selection
+
+<CardGroup cols={2}>
+  <Card title="Linked Customers" icon="user">
+    Search and select from your existing customer database. View customer details including:
+    - Name and contact information
+    - Booking history
+    - Last visit date
+  </Card>
+  
+  <Card title="Walk-In Appointments" icon="person-walking">
+    Create bookings without customer details for spontaneous appointments. These display as "Walk-in" throughout the system.
+  </Card>
+</CardGroup>
+
+## Recurring Bookings
+
+Create repeating appointments with powerful recurrence rules:
+
+<Accordion title="Frequency Options">
+  
+  **Daily**
+  - Repeats every day
+  - Ideal for daily classes or services
+  
+  **Weekly**
+  - Repeats on the same day of the week
+  - Perfect for weekly appointments
+  
+  **Monthly**
+  - Repeats on the same date each month
+  - Great for monthly services
+  
+  **Custom**
+  - Set custom intervals (e.g., every 2 weeks, every 3 days)
+  - Select specific days of the week
+  - Choose interval unit: days or weeks
+  
+</Accordion>
+
+### Recurrence Configuration
+
+<img src="/images/recurring-booking.png" alt="Recurring Booking Setup" />
+
+When setting up a recurring booking, specify:
+
+- **Frequency**: How often it repeats
+- **End Date**: When the recurrence stops
+- **Days of Week** (for custom weekly): Select which days the booking occurs
+- **Interval** (for custom): How many days/weeks between occurrences
+
+The system displays a plain-language summary:
+> "Repeats every Monday at 9:00 AM - 10:00 AM from Jan 1 to Jun 30"
+
+## Booking Details
+
+Each booking includes:
+
+<Tabs>
+  <Tab title="Basic Information">
+    - **Service**: The selected service with color indicator
+    - **Customer**: Name, phone, and email (if available)
+    - **Date & Time**: Full appointment schedule
+    - **Price**: Cost of the service
+    - **Duration**: Length of the appointment
+  </Tab>
+  
+  <Tab title="Notes">
+    - **Customer Note**: Messages from the customer (visible when booking through customer app)
+    - **Merchant Note**: Your internal notes about the booking
+  </Tab>
+  
+  <Tab title="Status">
+    - **Active**: Scheduled and confirmed
+    - **Completed**: Service has been delivered
+    - **Cancelled**: Booking was cancelled (with cancellation reason)
+  </Tab>
+</Tabs>
+
+## Managing Existing Bookings
+
+### View Booking Details
+
+Click any booking in the calendar or booking list to view:
+
+- Full customer information
+- Service details and phases
+- Booking notes from customer and merchant
+- Booking status and history
+
+### Edit Bookings
+
+<Steps>
+  <Step title="Open Booking">
+    Click the booking in your calendar to open the details modal
+  </Step>
+  
+  <Step title="Make Changes">
+    Update merchant notes or other editable fields
+  </Step>
+  
+  <Step title="Save">
+    Changes are immediately reflected in your calendar
+  </Step>
+</Steps>
+
+### Reschedule Bookings
+
+<Info>
+  Drag and drop bookings in the calendar to quickly reschedule appointments.
+</Info>
+
+When you drag a booking to a new time:
+
+1. Drop the booking at the desired time slot
+2. Confirm the reschedule in the dialog that appears
+3. The system validates the new time is in the future
+4. Booking is instantly updated
+
+<Warning>
+  You cannot reschedule bookings to times in the past. The calendar prevents this automatically.
+</Warning>
+
+## Cancelling Bookings
+
+Cancel appointments through multiple interfaces:
+
+<Accordion title="Cancellation Process">
+  
+  1. **Click the trash icon** next to any booking
+  2. **Provide cancellation reason** (optional but recommended)
+  3. **Confirm cancellation**
+  
+  Cancelled bookings:
+  - Remain visible in booking history
+  - Show cancellation timestamp and reason
+  - Cannot be modified (create a new booking instead)
+  - Are marked with cancelled status
+  
+</Accordion>
+
+### Cancellation Methods
+
+<CardGroup cols={3}>
+  <Card title="From Dashboard" icon="gauge">
+    Cancel from the upcoming/latest bookings list
+  </Card>
+  
+  <Card title="From Calendar" icon="calendar">
+    Click booking, then delete icon
+  </Card>
+  
+  <Card title="From Booking Details" icon="file-lines">
+    Open booking modal and select cancel
+  </Card>
+</CardGroup>
+
+## Group Class Participants
+
+For group bookings, manage your participant list:
+
+<Tabs>
+  <Tab title="Add Participants">
+    - Search for existing customers
+    - Add multiple participants at once
+    - See current capacity (e.g., "3/10 participants")
+    - System prevents exceeding maximum capacity
+  </Tab>
+  
+  <Tab title="Remove Participants">
+    - Click remove icon next to any participant
+    - Remaining participants stay in the booking
+    - Price adjusts if using per-person pricing
+  </Tab>
+  
+  <Tab title="View Participant List">
+    - See all enrolled customers
+    - View participant contact details
+    - Track who's attending the class
+  </Tab>
+</Tabs>
+
+## Booking Validation
+
+The system automatically validates:
+
+<CardGroup cols={2}>
+  <Card title="Scheduling Conflicts" icon="triangle-exclamation">
+    Prevents double-booking the same time slot
+  </Card>
+  
+  <Card title="Business Hours" icon="clock">
+    Ensures bookings fall within your operating hours
+  </Card>
+  
+  <Card title="Capacity Limits" icon="users">
+    Enforces min/max participant limits for group classes
+  </Card>
+  
+  <Card title="Past Dates" icon="calendar-xmark">
+    Prevents creating bookings in the past
+  </Card>
+</CardGroup>
+
+## Booking Views
+
+Access bookings from multiple locations:
+
+1. **Dashboard**: Upcoming and latest bookings
+2. **Calendar**: Visual schedule view
+3. **Customer Profile**: All bookings for a specific customer
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Calendar" icon="calendar" href="/features/calendar-scheduling">
+    View bookings in calendar format
+  </Card>
+  
+  <Card title="Customers" icon="users" href="/features/customer-management">
+    Manage customer profiles
+  </Card>
+  
+  <Card title="Services" icon="briefcase" href="/features/product-catalog">
+    Configure your services
+  </Card>
+</CardGroup>

@@ -1,0 +1,434 @@
+---
+title: Domain Models
+description: Core business entities and repository interfaces
+---
+
+## Overview
+
+The domain layer (`backend/internal/domain/`) contains the core business entities and repository interfaces. This layer has no external dependencies and defines the pure business logic of the application.
+
+## Core Domain Models
+
+### Booking
+
+The central entity representing a reservation in the system.
+
+<CodeGroup>
+```go booking.go
+type Booking struct {
+    Id                 int
+    Status             types.BookingStatus
+    BookingType        types.BookingType
+    IsRecurring        bool
+    MerchantId         uuid.UUID
+    EmployeeId         *int
+    ServiceId          int
+    LocationId         int
+    BookingSeriesId    *int
+    SeriesOriginalDate *time.Time
+    FromDate           time.Time
+    ToDate             time.Time
+}
+
+type BookingDetails struct {
+    Id                    int
+    BookingId             int
+    PricePerPerson        currencyx.Price
+    CostPerPerson         currencyx.Price
+    TotalPrice            currencyx.Price
+    TotalCost             currencyx.Price
+    MerchantNote          *string
+    MinParticipants       int
+    MaxParticipants       int
+    CurrentParticipants   int
+    CancelledByMerchantOn *time.Time
+    CancellationReason    *string
+}
+
+type BookingParticipant struct {
+    Id                 int
+    Status             types.BookingStatus
+    BookingId          int
+    CustomerId         *uuid.UUID
+    CustomerNote       *string
+    CancelledOn        *time.Time
+    CancellationReason *string
+    TransferredTo      *uuid.UUID
+    EmailId            *uuid.UUID
+}
+```
+</CodeGroup>
+
+<Accordion title="Booking Types">
+  The system supports multiple booking types:
+  
+  - **Appointment** - One-on-one bookings with an employee
+  - **Class** - Group bookings with multiple participants
+  - **Event** - Special events with participant management
+  
+  Each booking can be:
+  - **One-time** - Single occurrence
+  - **Recurring** - Part of a booking series with RRULE support
+</Accordion>
+
+### Merchant
+
+Represents a business using the reservation system.
+
+<CodeGroup>
+```go merchant.go
+type Merchant struct {
+    Id               uuid.UUID
+    Name             string
+    UrlName          string
+    ContactEmail     string
+    Introduction     string
+    Announcement     string
+    AboutUs          string
+    ParkingInfo      string
+    PaymentInfo      string
+    Timezone         string
+    CurrencyCode     string
+    SubscriptionTier types.SubTier
+}
+
+type Location struct {
+    Id                int
+    MerchantId        uuid.UUID
+    Country           *string
+    City              *string
+    PostalCode        *string
+    Address           *string
+    GeoPoint          types.GeoPoint
+    PlaceId           *string
+    FormattedLocation string
+    IsPrimary         bool
+    IsActive          bool
+}
+
+type PreferenceData struct {
+    FirstDayOfWeek     string
+    TimeFormat         string
+    CalendarView       string
+    CalendarViewMobile string
+    StartHour          TimeString
+    EndHour            TimeString
+    TimeFrequency      TimeString
+}
+```
+</CodeGroup>
+
+<Accordion title="Business Hours">
+  Merchants define their operating hours using time slots per day of the week:
+  
+  ```go
+  type TimeSlot struct {
+      StartTime string // Format: "HH:MM:SS"
+      EndTime   string // Format: "HH:MM:SS"
+  }
+  
+  // Business hours are stored as map[int][]TimeSlot
+  // where int is day of week (0=Sunday, 6=Saturday)
+  businessHours := map[int][]TimeSlot{
+      1: {{StartTime: "09:00:00", EndTime: "12:00:00"}, 
+          {StartTime: "13:00:00", EndTime: "17:00:00"}},
+      2: {{StartTime: "09:00:00", EndTime: "17:00:00"}},
+  }
+  ```
+</Accordion>
+
+### Customer
+
+Represents individuals who make bookings.
+
+<CodeGroup>
+```go customer.go
+type Customer struct {
+    Id          uuid.UUID
+    FirstName   *string
+    LastName    *string
+    Email       *string
+    PhoneNumber *string
+    Birthday    *time.Time
+    Note        *string
+}
+
+type PublicCustomer struct {
+    Customer
+    IsDummy         bool
+    IsBlacklisted   bool
+    BlacklistReason *string
+    TimesBooked     int
+    TimesCancelled  int
+}
+
+type CustomerStatistics struct {
+    Customer
+    IsDummy              bool
+    IsBlacklisted        bool
+    BlacklistReason      *string
+    TimesBooked          int
+    TimesCancelledByUser int
+    TimesUpcoming        int
+    Bookings             []PublicBooking
+}
+```
+</CodeGroup>
+
+<Accordion title="Dummy Customers">
+  The system supports "dummy" customers for walk-in appointments where full customer details aren't available. These can later be linked to registered users.
+</Accordion>
+
+### Service (Catalog)
+
+Defines services offered by merchants.
+
+<CodeGroup>
+```go catalog.go
+type Service struct {
+    Id              int
+    MerchantId      uuid.UUID
+    CategoryId      *int
+    BookingType     types.BookingType
+    Name            string
+    Description     *string
+    Color           string
+    TotalDuration   int
+    Price           *currencyx.Price
+    Cost            *currencyx.Price
+    PriceType       types.PriceType
+    IsActive        bool
+    Sequence        int
+    MinParticipants int
+    MaxParticipants int
+    ServiceSettings
+    DeletedOn       *time.Time
+}
+
+type ServicePhase struct {
+    Id        int
+    ServiceId int
+    Name      string
+    Sequence  int
+    Duration  int
+    PhaseType types.ServicePhaseType
+    DeletedOn *time.Time
+}
+
+type ServiceSettings struct {
+    CancelDeadline   *int // Minutes before booking
+    BookingWindowMin *int // Min advance booking time
+    BookingWindowMax *int // Max advance booking time
+    BufferTime       *int // Buffer between bookings
+}
+```
+</CodeGroup>
+
+<Accordion title="Service Phases">
+  Services can be broken down into multiple phases:
+  
+  - **Setup** - Preparation time before the main service
+  - **Active** - The main service duration
+  - **Cleanup** - Post-service cleanup time
+  
+  This allows for detailed scheduling and prevents overlapping bookings during setup/cleanup.
+</Accordion>
+
+### Product
+
+Inventory items that can be used in services.
+
+<CodeGroup>
+```go product.go
+type Product struct {
+    Id            int
+    MerchantId    uuid.UUID
+    Name          string
+    Description   string
+    Price         *currencyx.Price
+    Unit          string
+    MaxAmount     int
+    CurrentAmount int
+    DeletedOn     *string
+}
+
+type ConnectedProducts struct {
+    ProductId  int
+    ServiceId  int
+    AmountUsed int // Amount consumed per service
+}
+```
+</CodeGroup>
+
+### Team
+
+Employees who provide services.
+
+<CodeGroup>
+```go team.go
+type PublicEmployee struct {
+    Id          int
+    UserId      *uuid.UUID
+    Role        types.EmployeeRole
+    FirstName   *string
+    LastName    *string
+    Email       *string
+    PhoneNumber *string
+    IsActive    bool
+}
+```
+</CodeGroup>
+
+<Accordion title="Employee Roles">
+  - **Owner** - Full access to all merchant features
+  - **Admin** - Administrative access
+  - **Employee** - Basic access to assigned services
+</Accordion>
+
+### User
+
+Registered users who can authenticate and manage their data.
+
+<CodeGroup>
+```go user.go
+type User struct {
+    Id                uuid.UUID
+    FirstName         string
+    LastName          string
+    Email             string
+    PhoneNumber       *string
+    PasswordHash      *string
+    JwtRefreshVersion int
+    PreferredLang     *string
+    AuthProvider      *types.AuthProviderType
+    ProviderId        *string
+}
+```
+</CodeGroup>
+
+<Accordion title="Authentication Providers">
+  Users can authenticate via:
+  - Email/password (local authentication)
+  - Google OAuth
+  - Facebook OAuth
+  
+  The `JwtRefreshVersion` is incremented when a user logs out, invalidating all existing tokens.
+</Accordion>
+
+### BlockedTime
+
+Represents time slots when employees are unavailable.
+
+<CodeGroup>
+```go blocked_time.go
+type BlockedTime struct {
+    Id            int
+    MerchantId    uuid.UUID
+    EmployeeId    int
+    BlockedTypeId *int
+    Name          string
+    FromDate      time.Time
+    ToDate        time.Time
+    AllDay        bool
+    Source        *types.EventSource
+}
+
+type BlockedTimeType struct {
+    Id       int
+    Name     string
+    Duration int
+    Icon     string
+}
+```
+</CodeGroup>
+
+<Accordion title="Event Sources">
+  Blocked times can come from:
+  - **Manual** - Created directly in the system
+  - **External Calendar** - Synced from Google Calendar or other sources
+</Accordion>
+
+## Repository Interfaces
+
+Each domain model has a corresponding repository interface that defines data operations.
+
+<CodeGroup>
+```go booking.go
+type BookingRepository interface {
+    WithTx(tx db.DBTX) BookingRepository
+    
+    NewBooking(ctx context.Context, booking Booking) (int, error)
+    UpdateBookingStatus(ctx context.Context, merchantId uuid.UUID, bookingId int, status types.BookingStatus) error
+    CancelBookingByMerchant(ctx context.Context, merchantId uuid.UUID, bookingId int, reason string) error
+    
+    GetPublicBooking(ctx context.Context, bookingId int) (PublicBooking, error)
+    GetBookingsForCalendar(ctx context.Context, merchantId uuid.UUID, startTime, endTime string) ([]PublicBookingDetails, error)
+    
+    // ... more methods
+}
+```
+</CodeGroup>
+
+<Accordion title="Transaction Support">
+  All repository interfaces include a `WithTx()` method that returns a new instance using the provided transaction. This enables coordinated multi-repository operations:
+  
+  ```go
+  err := txManager.WithTransaction(ctx, func(tx db.DBTX) error {
+      booking, err := bookingRepo.WithTx(tx).NewBooking(ctx, booking)
+      if err != nil {
+          return err
+      }
+      
+      err = customerRepo.WithTx(tx).UpdateCustomer(ctx, customer)
+      return err
+  })
+  ```
+</Accordion>
+
+## Common Patterns
+
+### Price Handling
+
+The system uses the `currencyx.Price` type for currency values:
+
+<CodeGroup>
+```go
+import "github.com/bojanz/currency"
+
+type Price struct {
+    Amount       currency.Amount
+    CurrencyCode string
+}
+
+type FormattedPrice struct {
+    Amount   string // e.g., "25.00"
+    Currency string // e.g., "USD"
+    Symbol   string // e.g., "$"
+}
+```
+</CodeGroup>
+
+### Time Handling
+
+All timestamps are stored in UTC and converted to merchant timezone when needed:
+
+<CodeGroup>
+```go
+// Set local time to UTC for consistent database queries
+time.Local = time.UTC
+
+// Get merchant timezone for display
+timezone, err := merchantRepo.GetMerchantTimezone(ctx, merchantId)
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Services" icon="gears" href="/backend/services">
+    Learn how business logic uses these domain models
+  </Card>
+  <Card title="Repositories" icon="database" href="/backend/repositories">
+    See how these interfaces are implemented
+  </Card>
+</CardGroup>

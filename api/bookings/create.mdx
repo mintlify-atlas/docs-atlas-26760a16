@@ -1,0 +1,359 @@
+---
+title: "Creating Bookings"
+description: "Create appointments, events, and classes through the Booking API"
+---
+
+## Create Booking by Customer
+
+Customers can create new appointments or join existing group bookings (events/classes).
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/bookings/customer \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchant_name": "spa-retreat",
+    "service_id": 123,
+    "location_id": 456,
+    "timeStamp": "2026-03-15T14:00:00Z",
+    "customer_note": "Please use fragrance-free products"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/bookings/customer', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    merchant_name: 'spa-retreat',
+    service_id: 123,
+    location_id: 456,
+    timeStamp: '2026-03-15T14:00:00Z',
+    customer_note: 'Please use fragrance-free products'
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.example.com/bookings/customer',
+    headers={
+        'Authorization': 'Bearer TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'merchant_name': 'spa-retreat',
+        'service_id': 123,
+        'location_id': 456,
+        'timeStamp': '2026-03-15T14:00:00Z',
+        'customer_note': 'Please use fragrance-free products'
+    }
+)
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField path="merchant_name" type="string" required>
+  Unique identifier for the merchant
+</ParamField>
+
+<ParamField path="service_id" type="integer" required>
+  ID of the service to book
+</ParamField>
+
+<ParamField path="location_id" type="integer" required>
+  ID of the location where the service will be provided
+</ParamField>
+
+<ParamField path="timeStamp" type="string" required>
+  ISO 8601 timestamp for the booking start time
+</ParamField>
+
+<ParamField path="customer_note" type="string">
+  Optional note from the customer with special requests or information
+</ParamField>
+
+<ParamField path="booking_id" type="integer">
+  For group bookings only: ID of the existing group booking to join. Omit this field when creating a new appointment.
+</ParamField>
+
+### Response
+
+Returns `201 Created` on success with no response body.
+
+<Info>
+  **Joining Group Bookings**: To join an existing event or class, include the `booking_id` parameter. This adds the customer as a participant to the group booking.
+</Info>
+
+---
+
+## Create Booking by Merchant
+
+Merchants can create bookings on behalf of customers, including appointments, events, classes, and recurring bookings.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/bookings/merchant \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_id": 123,
+    "timestamp": "2026-03-15T14:00:00Z",
+    "customers": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "first_name": "Jane",
+        "last_name": "Smith",
+        "email": "jane@example.com",
+        "phone_number": "+1234567890"
+      }
+    ],
+    "merchant_note": "Customer prefers morning appointments",
+    "is_recurring": false
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/bookings/merchant', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    service_id: 123,
+    timestamp: '2026-03-15T14:00:00Z',
+    customers: [{
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      first_name: 'Jane',
+      last_name: 'Smith',
+      email: 'jane@example.com',
+      phone_number: '+1234567890'
+    }],
+    merchant_note: 'Customer prefers morning appointments',
+    is_recurring: false
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.example.com/bookings/merchant',
+    headers={
+        'Authorization': 'Bearer TOKEN',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'service_id': 123,
+        'timestamp': '2026-03-15T14:00:00Z',
+        'customers': [{
+            'id': '550e8400-e29b-41d4-a716-446655440000',
+            'first_name': 'Jane',
+            'last_name': 'Smith',
+            'email': 'jane@example.com',
+            'phone_number': '+1234567890'
+        }],
+        'merchant_note': 'Customer prefers morning appointments',
+        'is_recurring': False
+    }
+)
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField path="service_id" type="integer" required>
+  ID of the service to book
+</ParamField>
+
+<ParamField path="timestamp" type="string" required>
+  ISO 8601 timestamp for the booking start time
+</ParamField>
+
+<ParamField path="customers" type="array" required>
+  Array of customer objects to include in the booking
+</ParamField>
+
+<ParamField path="customers[].id" type="uuid">
+  Existing customer ID. If provided, other fields are optional and will be ignored.
+</ParamField>
+
+<ParamField path="customers[].first_name" type="string">
+  Customer's first name (required for new customers)
+</ParamField>
+
+<ParamField path="customers[].last_name" type="string">
+  Customer's last name
+</ParamField>
+
+<ParamField path="customers[].email" type="string">
+  Customer's email address
+</ParamField>
+
+<ParamField path="customers[].phone_number" type="string">
+  Customer's phone number
+</ParamField>
+
+<ParamField path="merchant_note" type="string">
+  Internal notes about the booking
+</ParamField>
+
+<ParamField path="is_recurring" type="boolean" required>
+  Set to `true` to create a recurring booking series
+</ParamField>
+
+<ParamField path="recurrence_rule" type="object">
+  Required when `is_recurring` is `true`. Defines the recurrence pattern.
+</ParamField>
+
+<ParamField path="recurrence_rule.frequency" type="string">
+  Recurrence frequency: `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY`
+</ParamField>
+
+<ParamField path="recurrence_rule.interval" type="integer">
+  Interval between occurrences (e.g., 2 for every 2 weeks)
+</ParamField>
+
+<ParamField path="recurrence_rule.weekdays" type="array">
+  Array of weekday strings: `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, `SU`
+</ParamField>
+
+<ParamField path="recurrence_rule.until" type="string">
+  ISO 8601 timestamp for when the recurrence ends
+</ParamField>
+
+### Response
+
+Returns `201 Created` on success with no response body.
+
+---
+
+## Creating Recurring Bookings
+
+Recurring bookings are perfect for classes that meet on a regular schedule.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/bookings/merchant \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service_id": 789,
+    "timestamp": "2026-03-15T18:00:00Z",
+    "customers": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000"
+      }
+    ],
+    "merchant_note": "Yoga class - beginner level",
+    "is_recurring": true,
+    "recurrence_rule": {
+      "frequency": "WEEKLY",
+      "interval": 1,
+      "weekdays": ["MO", "WE", "FR"],
+      "until": "2026-06-15T18:00:00Z"
+    }
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/bookings/merchant', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    service_id: 789,
+    timestamp: '2026-03-15T18:00:00Z',
+    customers: [{
+      id: '550e8400-e29b-41d4-a716-446655440000'
+    }],
+    merchant_note: 'Yoga class - beginner level',
+    is_recurring: true,
+    recurrence_rule: {
+      frequency: 'WEEKLY',
+      interval: 1,
+      weekdays: ['MO', 'WE', 'FR'],
+      until: '2026-06-15T18:00:00Z'
+    }
+  })
+});
+```
+</CodeGroup>
+
+<Info>
+  **Recurrence Rules**: The system follows the iCalendar (RFC 5545) specification for recurrence rules. This allows for flexible scheduling patterns.
+</Info>
+
+---
+
+## Group Booking vs Appointment
+
+### Creating an Appointment
+
+Appointments are one-on-one bookings with a single customer:
+
+```json
+{
+  "service_id": 123,
+  "timestamp": "2026-03-15T14:00:00Z",
+  "customers": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000"
+    }
+  ],
+  "is_recurring": false
+}
+```
+
+### Creating a Group Booking (Event/Class)
+
+Group bookings can have multiple participants:
+
+```json
+{
+  "service_id": 456,
+  "timestamp": "2026-03-15T14:00:00Z",
+  "customers": [
+    {"id": "550e8400-e29b-41d4-a716-446655440000"},
+    {"id": "660e8400-e29b-41d4-a716-446655440001"},
+    {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john@example.com"
+    }
+  ],
+  "is_recurring": false
+}
+```
+
+<Note>
+  The booking type (appointment, event, or class) is determined by the service configuration and whether the booking is recurring.
+</Note>
+
+---
+
+## Error Responses
+
+The API returns standard HTTP error codes:
+
+| Status Code | Description |
+|-------------|-------------|
+| `400 Bad Request` | Invalid parameters or validation error |
+| `401 Unauthorized` | Missing or invalid authentication token |
+| `404 Not Found` | Service, location, or customer not found |
+| `409 Conflict` | Time slot already booked or capacity reached |
+
+<Warning>
+  **Capacity Limits**: Group bookings have minimum and maximum participant limits. The API will return an error if you attempt to exceed the maximum capacity.
+</Warning>

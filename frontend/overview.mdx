@@ -1,0 +1,153 @@
+---
+title: Frontend Overview
+description: Architecture and structure of the Reservations frontend monorepo
+---
+
+The Reservations frontend is a modern React monorepo containing two separate applications and shared packages, all built with cutting-edge technologies.
+
+## Architecture
+
+The frontend uses a **monorepo structure** managed with npm workspaces, enabling code sharing between applications while maintaining separation of concerns.
+
+```
+frontend/
+├── apps/
+│   ├── jabulani/       # Merchant dashboard (port 5173)
+│   └── tango/          # Customer booking interface (port 5174)
+└── packages/
+    ├── components/     # Shared UI components
+    ├── lib/           # Shared utilities and hooks
+    └── assets/        # Shared icons and images
+```
+
+## Technology Stack
+
+<CardGroup cols={2}>
+  <Card title="React 19" icon="react">
+    Latest React version with improved performance and new features
+  </Card>
+  <Card title="TanStack Router" icon="route">
+    Type-safe routing with file-based route structure (v1.147.1)
+  </Card>
+  <Card title="TanStack Query" icon="database">
+    Powerful data fetching and caching (v5.90.16)
+  </Card>
+  <Card title="Tailwind CSS 4" icon="palette">
+    Utility-first CSS framework for rapid UI development (v4.1.18)
+  </Card>
+</CardGroup>
+
+### Core Dependencies
+
+- **React 19.2.3** - UI library
+- **Vite 7.3.1** - Build tool and dev server
+- **TanStack Router 1.147.1** - File-based routing
+- **TanStack Query 5.90.16** - Server state management
+- **Tailwind CSS 4.1.18** - Styling framework
+
+## Shared Packages
+
+### @reservations/components
+
+Reusable UI components used across both applications:
+
+- **Form Components**: Input, Select, ComboBox, MultiSelect, DatePicker, CheckBox
+- **Layout Components**: Card, Modal, Popover, Breadcrumbs
+- **Data Display**: Avatar, ProgressBar, Loading, ServerError
+- **Interactive**: Button, SearchInput, DeleteModal
+- **Advanced**: AG Grid integration for data tables
+
+**Key Dependencies**:
+- `@radix-ui/react-popover` (^1.1.15)
+- `@radix-ui/react-tooltip` (^1.2.8)
+- `ag-grid-react` (^35.0.0)
+
+### @reservations/lib
+
+Shared utilities, hooks, and business logic:
+
+- **Datetime utilities** - Date formatting and manipulation
+- **React hooks** - Custom hooks for common patterns
+- **Query helpers** - TanStack Query utilities
+- **Constants** - Shared application constants
+- **Utils** - General utility functions
+- **Autofill** - Form autofill helpers
+
+### @reservations/assets
+
+Shared static assets including icons, images, and other media files used across applications.
+
+## Monorepo Configuration
+
+### Workspace Setup
+
+The monorepo is configured in the root `package.json`:
+
+```json
+{
+  "workspaces": [
+    "frontend/apps/*",
+    "frontend/packages/*"
+  ]
+}
+```
+
+### Shared Build Configuration
+
+Both apps use a shared Vite configuration (`frontend/vite.config.js`) that provides:
+
+- TanStack Router plugin with file-based routing
+- React plugin with optional compiler support
+- Development proxy to backend API (`/api` → `http://localhost:8080`)
+- Production build optimizations (console statement removal)
+- Local development domain support (`.reservations.local`)
+
+### Development Scripts
+
+```bash
+# Start Jabulani (merchant dashboard)
+npm run dev-jabulani
+
+# Start Tango (customer interface)
+npm run dev-tango
+
+# Build applications
+npm run build-jabulani
+npm run build-tango
+
+# Run tests
+npm test
+
+# Lint code
+npm run lint
+```
+
+## File-Based Routing
+
+Both applications use **TanStack Router** with file-based routing. Routes are automatically generated from the file structure in `src/routes/`:
+
+- `index.jsx` - Route index page
+- `$param.jsx` - Dynamic route parameter
+- `_layout.jsx` - Layout route (no path segment)
+- `_layout/page.jsx` - Nested route within layout
+- `-components/` - Co-located components (ignored by router)
+
+## API Integration
+
+Both apps communicate with the backend through:
+
+- **REST API** at `/api/v1/`
+- **TanStack Query** for data fetching and caching
+- **Development proxy** configured in Vite for local development
+- **Error handling** with `ServerError` component from shared components
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Jabulani Dashboard" icon="store" href="/frontend/jabulani">
+    Learn about the merchant dashboard application
+  </Card>
+  <Card title="Tango Booking" icon="calendar" href="/frontend/tango">
+    Explore the customer booking interface
+  </Card>
+</CardGroup>

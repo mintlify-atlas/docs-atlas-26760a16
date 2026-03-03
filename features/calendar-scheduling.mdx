@@ -1,0 +1,436 @@
+---
+title: Calendar & Scheduling
+description: Visual schedule management with drag-and-drop booking, multiple calendar views, and availability controls
+---
+
+Manage your entire schedule with a powerful calendar interface featuring flexible views, drag-and-drop rescheduling, and availability management.
+
+## Calendar Views
+
+Switch between multiple calendar layouts to match your workflow:
+
+<Tabs>
+  <Tab title="Month View">
+    <img src="/images/calendar-month.png" alt="Month Calendar View" />
+    
+    **Best for**: Long-term planning and overview
+    
+    - See entire month at a glance
+    - Bookings displayed as colored events
+    - Click any day to see details
+    - Fixed week count for consistent layout
+  </Tab>
+  
+  <Tab title="Week View">
+    <img src="/images/calendar-week.png" alt="Week Calendar View" />
+    
+    **Best for**: Day-to-day operations
+    
+    - Time-grid layout with hourly slots
+    - See booking duration visually
+    - Business hours highlighted
+    - Current time indicator
+    - Most popular view for scheduling
+  </Tab>
+  
+  <Tab title="Day View">
+    **Best for**: Focused daily management
+    
+    - Single day time-grid
+    - Detailed hourly breakdown
+    - Perfect for busy days
+    - Shows exact scheduling gaps
+  </Tab>
+  
+  <Tab title="List View">
+    **Best for**: Chronological booking review
+    
+    - Simple list of bookings
+    - Easy to scan upcoming appointments
+    - Shows start and end times
+    - Great for printing schedules
+  </Tab>
+</Tabs>
+
+## Calendar Navigation
+
+Move through your schedule efficiently:
+
+<CardGroup cols={3}>
+  <Card title="Navigation Arrows" icon="arrows-left-right">
+    Click Previous/Next to move forward or backward by the current view period
+  </Card>
+  
+  <Card title="Today Button" icon="calendar-day">
+    Instantly jump back to today's date from anywhere in the calendar
+  </Card>
+  
+  <Card title="Date Picker" icon="calendar-check">
+    Select any specific date to jump directly to that day
+  </Card>
+</CardGroup>
+
+## Calendar Display
+
+### Time Configuration
+
+Your calendar respects your preferences:
+
+<Accordion title="Time Format">
+  
+  Choose between:
+  - **12-hour format**: 9:00 AM, 2:30 PM
+  - **24-hour format**: 09:00, 14:30
+  
+  Set in Settings → Scheduling preferences
+  
+</Accordion>
+
+<Accordion title="Week Start Day">
+  
+  Configure whether your week starts on:
+  - Monday (default)
+  - Sunday
+  
+  Affects all calendar views and date pickers
+  
+</Accordion>
+
+<Accordion title="Time Slots">
+  
+  Define your calendar granularity:
+  - 5-minute intervals (most common)
+  - 10-minute intervals
+  - 15-minute intervals
+  - 30-minute intervals
+  
+  Controls snap-to behavior when dragging bookings
+  
+</Accordion>
+
+### Business Hours
+
+Visually distinguish your operating hours:
+
+<Info>
+  Non-business hours appear with a subtle gray overlay, making available time slots immediately visible.
+</Info>
+
+Business hours configuration:
+- Set different hours for each day of the week
+- Define start and end times
+- Mark days as closed
+- Automatic visual distinction in calendar
+
+## Booking Events
+
+Bookings appear as colored blocks in your calendar:
+
+<CardGroup cols={2}>
+  <Card title="Event Information" icon="calendar-check">
+    Each booking displays:
+    - Customer name (or "Walk-in")
+    - Time range
+    - Service color coding
+    - Duration indicator
+  </Card>
+  
+  <Card title="Event Colors" icon="palette">
+    - Each service has a unique color
+    - Text color automatically adjusts for readability
+    - Helps quickly identify service types
+    - Visual consistency across all views
+  </Card>
+</CardGroup>
+
+### Booking Details Modal
+
+Click any booking to view complete details:
+
+<img src="/images/booking-modal.png" alt="Booking Details Modal" />
+
+<Tabs>
+  <Tab title="Customer Info">
+    - Full name
+    - Contact information
+    - Customer profile link
+    - Customer notes (if any)
+  </Tab>
+  
+  <Tab title="Service Details">
+    - Service name and color
+    - Duration and phases
+    - Price and cost
+    - Merchant notes
+  </Tab>
+  
+  <Tab title="Actions">
+    - Edit booking details
+    - Cancel appointment
+    - View customer profile
+    - Reschedule (via drag-and-drop)
+  </Tab>
+</Tabs>
+
+## Creating Bookings from Calendar
+
+Add appointments directly from the calendar interface:
+
+<Steps>
+  <Step title="Click Create Menu">
+    Click the "+" button in the calendar toolbar
+  </Step>
+  
+  <Step title="Choose Booking Type">
+    Select:
+    - **New Booking**: Customer appointment
+    - **Blocked Time**: Mark time as unavailable
+  </Step>
+  
+  <Step title="Fill Details">
+    Side panel opens with the booking form (see [Booking Management](/features/booking-management))
+  </Step>
+  
+  <Step title="Save">
+    Booking appears immediately in the calendar
+  </Step>
+</Steps>
+
+## Drag-and-Drop Rescheduling
+
+<Info>
+  Quickly reschedule appointments by dragging bookings to new time slots.
+</Info>
+
+### How It Works
+
+1. **Click and hold** any booking event
+2. **Drag** to the desired new time slot
+3. **Drop** the booking
+4. **Confirm** the reschedule in the dialog
+
+<img src="/images/drag-booking.png" alt="Drag and Drop Booking" />
+
+### Drag Restrictions
+
+<Warning>
+  You cannot reschedule bookings to times in the past. The calendar automatically prevents this.
+</Warning>
+
+The system validates:
+- New time must be in the future
+- Booking duration stays the same
+- New time must fit within a single day (no overnight drag)
+
+### Confirmation Dialog
+
+Before finalizing the reschedule, you'll see:
+- Original date and time
+- New date and time
+- Option to confirm or cancel
+- Ability to revert by clicking cancel
+
+<Accordion title="Canceling a Drag">
+  
+  If you change your mind:
+  1. Click "Cancel" in the confirmation dialog
+  2. The booking returns to its original time
+  3. No changes are saved
+  
+</Accordion>
+
+## Blocked Time Management
+
+Mark time as unavailable for bookings:
+
+### Creating Blocked Time
+
+<Steps>
+  <Step title="Open Create Menu">
+    Click "+" button → "Block Time"
+  </Step>
+  
+  <Step title="Configure Block">
+    Set:
+    - Block type (vacation, meeting, break, etc.)
+    - Start and end time
+    - All-day option
+    - Employee assignment (if applicable)
+  </Step>
+  
+  <Step title="Add Icon (Optional)">
+    Choose an emoji or icon to identify the block type
+  </Step>
+  
+  <Step title="Save">
+    Time is marked as unavailable
+  </Step>
+</Steps>
+
+### Blocked Time Display
+
+<CardGroup cols={2}>
+  <Card title="Visual Style" icon="ban">
+    - Dark semi-transparent background
+    - Clearly distinguishable from bookings
+    - Shows block name and icon
+  </Card>
+  
+  <Card title="Behavior" icon="lock">
+    - Prevents customer bookings in that time
+    - Can be edited or deleted
+    - Can be moved by dragging
+    - Supports all-day blocks
+  </Card>
+</CardGroup>
+
+### Editing Blocked Time
+
+Click any blocked time block to:
+- View block details
+- Change duration or time
+- Update block type
+- Delete the block
+
+## Recurring Events
+
+<Info>
+  Recurring bookings created through the booking form appear as individual instances in the calendar.
+</Info>
+
+Each occurrence of a recurring booking:
+- Displays as a separate event
+- Can be individually modified
+- Links back to the booking series
+- Shows series indicator (if configured)
+
+## Calendar Side Panel
+
+The calendar includes a sliding side panel for:
+
+<Tabs>
+  <Tab title="New Booking">
+    Full booking creation interface without leaving the calendar view
+  </Tab>
+  
+  <Tab title="Blocked Time">
+    Quick blocked time creation and management
+  </Tab>
+  
+  <Tab title="Booking Details">
+    Edit existing bookings and view complete information
+  </Tab>
+</Tabs>
+
+The side panel automatically closes after saving or can be dismissed with the close button.
+
+## Calendar Toolbar
+
+Quick actions available in the calendar header:
+
+<CardGroup cols={2}>
+  <Card title="View Selector" icon="eye">
+    Dropdown to switch between Month, Week, Day, and List views
+  </Card>
+  
+  <Card title="Date Navigation" icon="calendar">
+    Current date display, navigation arrows, and "Today" button
+  </Card>
+  
+  <Card title="Create Menu" icon="plus">
+    Quick access to create bookings or block time
+  </Card>
+  
+  <Card title="Date Picker" icon="calendar-days">
+    Jump to any date with the calendar picker
+  </Card>
+</CardGroup>
+
+## Responsive Calendar
+
+The calendar adapts to your screen size:
+
+### Mobile View
+- Simplified day headers
+- Touch-friendly event selection
+- Vertical layout for better mobile viewing
+- Create menu as floating action button
+
+### Desktop View
+- Full calendar with all features
+- Multiple visible weeks/days
+- Side-by-side panels
+- Hover interactions
+
+## Calendar Performance
+
+<CardGroup cols={2}>
+  <Card title="Lazy Loading" icon="arrows-rotate">
+    Events load only for the visible date range, ensuring fast performance
+  </Card>
+  
+  <Card title="Live Updates" icon="bolt">
+    Calendar refreshes automatically when bookings change
+  </Card>
+</CardGroup>
+
+## Time Zone Handling
+
+<Info>
+  All times are displayed in your business's local time zone as configured in your merchant settings.
+</Info>
+
+## Keyboard Shortcuts
+
+Navigate efficiently with keyboard controls:
+
+- **Today**: `t` key
+- **Previous**: Left arrow
+- **Next**: Right arrow
+- **Month view**: `m` key
+- **Week view**: `w` key
+- **Day view**: `d` key
+
+## Calendar Integration
+
+Your calendar can sync with external calendars:
+
+<Card title="Google Calendar Sync" icon="calendar" href="/features/integrations">
+  Connect your Google Calendar for two-way synchronization
+</Card>
+
+## Tips for Effective Scheduling
+
+<CardGroup cols={2}>
+  <Card title="Use Color Coding" icon="palette">
+    Assign distinct colors to different service types for quick visual identification
+  </Card>
+  
+  <Card title="Block Buffer Time" icon="clock">
+    Add blocked time between bookings for preparation and cleanup
+  </Card>
+  
+  <Card title="Review Week View" icon="calendar-week">
+    Start each week by reviewing your schedule in week view
+  </Card>
+  
+  <Card title="Set Business Hours" icon="business-time">
+    Properly configure business hours to prevent late bookings
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Create Bookings" icon="calendar-plus" href="/features/booking-management">
+    Learn about booking management
+  </Card>
+  
+  <Card title="Configure Settings" icon="gear" href="/settings/scheduling">
+    Set up calendar preferences
+  </Card>
+  
+  <Card title="Sync Calendar" icon="arrows-rotate" href="/features/integrations">
+    Connect external calendars
+  </Card>
+</CardGroup>

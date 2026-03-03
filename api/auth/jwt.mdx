@@ -1,0 +1,390 @@
+---
+title: "JWT Authentication"
+description: "Email/password authentication with JWT tokens"
+---
+
+## Login
+
+Authenticate a user with email and password credentials.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/v1/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securePassword123'
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.example.com/api/v1/auth/login',
+    json={
+        'email': 'user@example.com',
+        'password': 'securePassword123'
+    }
+)
+```
+</CodeGroup>
+
+### Endpoint
+
+<ParamField path="POST /api/v1/auth/login" type="endpoint">
+  Authenticate user and receive JWT tokens
+</ParamField>
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  User's email address (must be valid email format)
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password (ASCII characters only)
+</ParamField>
+
+### Response
+
+On success, returns status `200 OK` with JWT tokens set as HTTP-only cookies:
+
+<ResponseField name="Set-Cookie" type="header">
+  `jwt-access` - Access token cookie (expires per `JWT_ACCESS_EXP_MIN`)
+</ResponseField>
+
+<ResponseField name="Set-Cookie" type="header">
+  `jwt-refresh` - Refresh token cookie (expires per `JWT_REFRESH_EXP_MIN`)
+</ResponseField>
+
+### Error Responses
+
+<ResponseField name="400 Bad Request">
+  Invalid email format or missing required fields
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+  Incorrect email or password
+</ResponseField>
+
+---
+
+## User Signup
+
+Create a new user account with email and password.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/api/v1/auth/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.doe@example.com",
+    "phone_number": "+14155552671",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/v1/auth/users', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include',
+  body: JSON.stringify({
+    first_name: 'John',
+    last_name: 'Doe',
+    email: 'john.doe@example.com',
+    phone_number: '+14155552671',
+    password: 'securePassword123'
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.example.com/api/v1/auth/users',
+    json={
+        'first_name': 'John',
+        'last_name': 'Doe',
+        'email': 'john.doe@example.com',
+        'phone_number': '+14155552671',
+        'password': 'securePassword123'
+    }
+)
+```
+</CodeGroup>
+
+### Endpoint
+
+<ParamField path="POST /api/v1/auth/users" type="endpoint">
+  Register a new user account
+</ParamField>
+
+### Request Body
+
+<ParamField body="first_name" type="string" required>
+  User's first name
+</ParamField>
+
+<ParamField body="last_name" type="string" required>
+  User's last name
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  User's email address (must be unique and valid email format)
+</ParamField>
+
+<ParamField body="phone_number" type="string" required>
+  User's phone number (must be in E.164 format, e.g., +14155552671)
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password (ASCII characters only, will be hashed with bcrypt)
+</ParamField>
+
+### Response
+
+On success, returns status `201 Created` with JWT tokens set as HTTP-only cookies:
+
+<ResponseField name="Set-Cookie" type="header">
+  `jwt-access` - Access token cookie
+</ResponseField>
+
+<ResponseField name="Set-Cookie" type="header">
+  `jwt-refresh` - Refresh token cookie
+</ResponseField>
+
+### Error Responses
+
+<ResponseField name="400 Bad Request">
+  Validation errors (invalid email, phone number format, email/phone already exists, or password too long)
+</ResponseField>
+
+---
+
+## Get Current User
+
+Retrieve information about the currently authenticated user.
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.example.com/api/v1/auth/me \
+  -H "Cookie: jwt-access=<access_token>"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/v1/auth/me', {
+  method: 'GET',
+  credentials: 'include'
+});
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.example.com/api/v1/auth/me',
+    cookies={'jwt-access': '<access_token>'}
+)
+```
+</CodeGroup>
+
+### Endpoint
+
+<ParamField path="GET /api/v1/auth/me" type="endpoint">
+  Get current authenticated user details
+</ParamField>
+
+### Authentication Required
+
+This endpoint requires a valid access token in the `jwt-access` cookie.
+
+### Response
+
+Returns status `200 OK` if authenticated.
+
+---
+
+## Logout
+
+Log out the current user by clearing their JWT tokens.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/api/v1/auth/logout \
+  -H "Cookie: jwt-access=<access_token>"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/v1/auth/logout', {
+  method: 'POST',
+  credentials: 'include'
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.example.com/api/v1/auth/logout',
+    cookies={'jwt-access': '<access_token>'}
+)
+```
+</CodeGroup>
+
+### Endpoint
+
+<ParamField path="POST /api/v1/auth/logout" type="endpoint">
+  Logout from current device
+</ParamField>
+
+### Authentication Required
+
+This endpoint requires a valid access token in the `jwt-access` cookie.
+
+### Response
+
+Clears both `jwt-access` and `jwt-refresh` cookies by setting them to expired.
+
+---
+
+## Logout All Devices
+
+Invalidate all refresh tokens across all devices by incrementing the user's JWT refresh version.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.example.com/api/v1/auth/logout/all \
+  -H "Cookie: jwt-access=<access_token>"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/v1/auth/logout/all', {
+  method: 'POST',
+  credentials: 'include'
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.example.com/api/v1/auth/logout/all',
+    cookies={'jwt-access': '<access_token>'}
+)
+```
+</CodeGroup>
+
+### Endpoint
+
+<ParamField path="POST /api/v1/auth/logout/all" type="endpoint">
+  Logout from all devices and invalidate all refresh tokens
+</ParamField>
+
+### Authentication Required
+
+This endpoint requires a valid access token in the `jwt-access` cookie.
+
+### Response
+
+Increments the user's `jwt_refresh_version` in the database, invalidating all existing refresh tokens. Clears both `jwt-access` and `jwt-refresh` cookies for the current session.
+
+### Error Responses
+
+<ResponseField name="400 Bad Request">
+  Error incrementing refresh version
+</ResponseField>
+
+---
+
+## JWT Token Structure
+
+Access and refresh tokens are signed using HS256 algorithm and contain the following claims:
+
+### Common Claims (Both Tokens)
+
+<ResponseField name="sub" type="uuid">
+  Subject - User ID (UUID v7 format)
+</ResponseField>
+
+<ResponseField name="exp" type="integer">
+  Expiration time (Unix timestamp)
+</ResponseField>
+
+### Optional Employee Claims
+
+If the user is associated with a merchant as an employee:
+
+<ResponseField name="merchant_id" type="uuid">
+  Merchant ID the employee belongs to
+</ResponseField>
+
+<ResponseField name="employee_id" type="integer">
+  Employee ID
+</ResponseField>
+
+<ResponseField name="location_id" type="integer">
+  Location ID where the employee works
+</ResponseField>
+
+<ResponseField name="employee_role" type="string">
+  Employee role (e.g., "owner", "manager", "staff")
+</ResponseField>
+
+### Refresh Token Only
+
+<ResponseField name="refresh_version" type="integer">
+  Current refresh token version (incremented on logout all devices)
+</ResponseField>
+
+## Token Configuration
+
+Token expiration times are configured via environment variables:
+
+- `JWT_ACCESS_EXP_MIN` - Access token expiration in minutes
+- `JWT_REFRESH_EXP_MIN` - Refresh token expiration in minutes
+- `JWT_ACCESS_SECRET` - Secret key for signing access tokens
+- `JWT_REFRESH_SECRET` - Secret key for signing refresh tokens
+
+## Implementation Notes
+
+### Password Security
+
+- Passwords are hashed using bcrypt with cost factor 14
+- Original passwords are never stored
+- Password comparison is constant-time to prevent timing attacks
+
+### Token Storage
+
+Tokens are stored in HTTP-only cookies with the following properties:
+
+- **HttpOnly**: Prevents JavaScript access (XSS protection)
+- **SameSite**: Lax mode (CSRF protection)
+- **Domain**: `.reservations.local` (subdomain support)
+- **Secure**: false in development, true in production (HTTPS only)
+- **Path**: `/` (available site-wide)
+
+### Cookie Names
+
+- Access token: `jwt-access`
+- Refresh token: `jwt-refresh`

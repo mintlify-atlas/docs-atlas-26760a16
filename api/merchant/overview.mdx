@@ -1,0 +1,144 @@
+---
+title: Merchant API Overview
+description: Introduction to the merchant-scoped API endpoints for managing business operations
+---
+
+The Merchant API provides authenticated endpoints for managing your business operations. All endpoints require authentication and operate within the context of the authenticated merchant.
+
+## Authentication
+
+All Merchant API endpoints require authentication via the session token obtained during login. The endpoints automatically identify the merchant from the authenticated session context.
+
+## Base Path
+
+All merchant endpoints are prefixed with:
+
+```
+/api/v1/merchant
+```
+
+## Role-Based Access Control
+
+Many endpoints implement role-based access control with three levels:
+
+- **Owner**: Full access to all operations including deletion and name changes
+- **Admin**: Management access to most resources
+- **Staff**: Read access and limited write operations
+
+Endpoints will return `403 Forbidden` if the authenticated user lacks the required role.
+
+## Available Resources
+
+The Merchant API is organized into several resource groups:
+
+<CardGroup cols={3}>
+  <Card title="Settings" icon="gear" href="/api/merchant/settings">
+    Manage merchant settings, business hours, and preferences
+  </Card>
+  <Card title="Locations" icon="location-dot" href="/api/merchant/locations">
+    Manage business locations and addresses
+  </Card>
+  <Card title="Services" icon="list" href="/api/merchant/services">
+    Create and manage services and service groups
+  </Card>
+  <Card title="Products" icon="box" href="/api/merchant/products">
+    Track inventory products and stock levels
+  </Card>
+  <Card title="Team" icon="users" href="/api/merchant/team">
+    Manage team members and their roles
+  </Card>
+  <Card title="Customers" icon="user" href="/api/merchant/customers">
+    Manage customer information and blacklists
+  </Card>
+  <Card title="Blocked Times" icon="ban" href="/api/merchant/blocked-times">
+    Create time blocks for unavailability
+  </Card>
+  <Card title="Integrations" icon="plug" href="/api/merchant/integrations">
+    Connect external calendar services
+  </Card>
+</CardGroup>
+
+## Common Patterns
+
+### Response Format
+
+Successful responses return JSON with the appropriate status code:
+
+```json
+{
+  "data": { /* response payload */ }
+}
+```
+
+Errors return:
+
+```json
+{
+  "error": {
+    "message": "Error description"
+  }
+}
+```
+
+### Timestamps
+
+All timestamps are returned in RFC3339 format:
+
+```
+2026-03-03T10:30:00Z
+```
+
+### Currency
+
+Prices are represented with both currency code and formatted display:
+
+```json
+{
+  "price": {
+    "amount": 5000,
+    "currency": "USD",
+    "formatted": "$50.00"
+  }
+}
+```
+
+## Dashboard Endpoint
+
+Get dashboard data including upcoming bookings, statistics, and low stock alerts:
+
+```bash
+curl -X GET 'https://api.example.com/api/v1/merchant/dashboard?date=2026-03-03T00:00:00Z&period=7' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField query="date" type="string" required>
+  The reference date in RFC3339 format
+</ParamField>
+
+<ParamField query="period" type="integer" required>
+  Number of days for the period
+</ParamField>
+
+<ResponseField name="period_start" type="timestamp">
+  Start of the reporting period
+</ResponseField>
+
+<ResponseField name="period_end" type="timestamp">
+  End of the reporting period
+</ResponseField>
+
+<ResponseField name="upcoming_bookings" type="array">
+  List of upcoming bookings with customer and service details
+</ResponseField>
+
+<ResponseField name="latest_bookings" type="array">
+  Most recent bookings
+</ResponseField>
+
+<ResponseField name="low_stock_products" type="array">
+  Products with low stock levels
+</ResponseField>
+
+<ResponseField name="statistics" type="object">
+  Revenue, bookings, cancellations, and duration statistics with period-over-period changes
+</ResponseField>

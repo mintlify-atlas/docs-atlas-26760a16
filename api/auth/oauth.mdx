@@ -1,0 +1,417 @@
+---
+title: "OAuth Authentication"
+description: "Authenticate users with Google or Facebook OAuth 2.0"
+---
+
+## Overview
+
+The Reservations API supports OAuth 2.0 authentication with Google and Facebook providers. OAuth allows users to authenticate using their existing social media accounts without creating a new password.
+
+### Supported Providers
+
+- **Google** - OAuth 2.0 with OpenID Connect
+- **Facebook** - OAuth 2.0 with Graph API
+
+## OAuth Flow
+
+The OAuth authentication flow follows these steps:
+
+1. **Initiate**: User clicks login button, redirects to provider's authorization page
+2. **Authorize**: User grants permissions on provider's website
+3. **Callback**: Provider redirects back to API with authorization code
+4. **Exchange**: API exchanges code for access token and fetches user info
+5. **Authenticate**: API creates or finds user account and returns JWT tokens
+
+---
+
+## Google OAuth
+
+### Step 1: Initiate Google Login
+
+Redirect the user to Google's authorization page.
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.example.com/api/v1/auth/oauth/google
+```
+
+```javascript JavaScript
+window.location.href = 'https://api.example.com/api/v1/auth/oauth/google';
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.example.com/api/v1/auth/oauth/google',
+    allow_redirects=False
+)
+redirect_url = response.headers['Location']
+```
+</CodeGroup>
+
+#### Endpoint
+
+<ParamField path="GET /api/v1/auth/oauth/google" type="endpoint">
+  Initiate Google OAuth flow
+</ParamField>
+
+#### Response
+
+Returns a `307 Temporary Redirect` to Google's authorization URL with:
+
+<ResponseField name="Location" type="header">
+  Google OAuth authorization URL with state parameter
+</ResponseField>
+
+<ResponseField name="Set-Cookie" type="header">
+  `oauth-state` - CSRF protection state token
+</ResponseField>
+
+#### OAuth Configuration
+
+- **Scopes**: `email`, `profile`
+- **Access Type**: Offline (allows refresh token)
+- **Endpoint**: Google OAuth 2.0 endpoints
+- **Redirect URI**: `http://localhost:8080/api/v1/auth/callback/google`
+
+### Step 2: Google Callback
+
+After user authorization, Google redirects to this callback endpoint.
+
+#### Endpoint
+
+<ParamField path="GET /api/v1/auth/oauth/google/callback" type="endpoint">
+  Handle Google OAuth callback
+</ParamField>
+
+#### Query Parameters
+
+<ParamField query="code" type="string" required>
+  Authorization code from Google
+</ParamField>
+
+<ParamField query="state" type="string" required>
+  State parameter for CSRF validation
+</ParamField>
+
+#### Response
+
+On success:
+
+1. Validates state parameter against cookie
+2. Exchanges authorization code for access token
+3. Fetches user profile from Google
+4. Creates new user or finds existing user by provider ID
+5. Returns JWT tokens as HTTP-only cookies
+6. Redirects to `http://localhost:8080/` with `308 Permanent Redirect`
+
+<ResponseField name="Set-Cookie" type="header">
+  `jwt-access` - Access token cookie
+</ResponseField>
+
+<ResponseField name="Set-Cookie" type="header">
+  `jwt-refresh` - Refresh token cookie
+</ResponseField>
+
+<ResponseField name="Location" type="header">
+  Redirect to application homepage
+</ResponseField>
+
+#### Google User Profile
+
+The API fetches the following information from Google's OpenID Connect endpoint:
+
+```json
+{
+  "sub": "google-user-id",
+  "name": "John Doe",
+  "given_name": "John",
+  "family_name": "Doe",
+  "picture": "https://...",
+  "email": "john.doe@gmail.com",
+  "email_verified": true,
+  "locale": "en"
+}
+```
+
+#### Error Responses
+
+<ResponseField name="400 Bad Request">
+  Invalid state parameter or OAuth exchange error
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+  Unexpected error during OAuth flow or user creation
+</ResponseField>
+
+---
+
+## Facebook OAuth
+
+### Step 1: Initiate Facebook Login
+
+Redirect the user to Facebook's authorization page.
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.example.com/api/v1/auth/oauth/facebook
+```
+
+```javascript JavaScript
+window.location.href = 'https://api.example.com/api/v1/auth/oauth/facebook';
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.example.com/api/v1/auth/oauth/facebook',
+    allow_redirects=False
+)
+redirect_url = response.headers['Location']
+```
+</CodeGroup>
+
+#### Endpoint
+
+<ParamField path="GET /api/v1/auth/oauth/facebook" type="endpoint">
+  Initiate Facebook OAuth flow
+</ParamField>
+
+#### Response
+
+Returns a `307 Temporary Redirect` to Facebook's authorization URL with:
+
+<ResponseField name="Location" type="header">
+  Facebook OAuth authorization URL with state parameter
+</ResponseField>
+
+<ResponseField name="Set-Cookie" type="header">
+  `oauth-state` - CSRF protection state token
+</ResponseField>
+
+#### OAuth Configuration
+
+- **Scopes**: `email`, `public_profile`
+- **Access Type**: Offline (allows refresh token)
+- **Endpoint**: Facebook OAuth 2.0 endpoints
+- **Redirect URI**: `http://localhost:8080/api/v1/auth/callback/facebook`
+
+### Step 2: Facebook Callback
+
+After user authorization, Facebook redirects to this callback endpoint.
+
+#### Endpoint
+
+<ParamField path="GET /api/v1/auth/oauth/facebook/callback" type="endpoint">
+  Handle Facebook OAuth callback
+</ParamField>
+
+#### Query Parameters
+
+<ParamField query="code" type="string" required>
+  Authorization code from Facebook
+</ParamField>
+
+<ParamField query="state" type="string" required>
+  State parameter for CSRF validation
+</ParamField>
+
+#### Response
+
+On success:
+
+1. Validates state parameter against cookie
+2. Exchanges authorization code for access token
+3. Fetches user profile from Facebook Graph API
+4. Creates new user or finds existing user by provider ID
+5. Returns JWT tokens as HTTP-only cookies
+6. Redirects to `http://localhost:8080/` with `308 Permanent Redirect`
+
+<ResponseField name="Set-Cookie" type="header">
+  `jwt-access` - Access token cookie
+</ResponseField>
+
+<ResponseField name="Set-Cookie" type="header">
+  `jwt-refresh` - Refresh token cookie
+</ResponseField>
+
+<ResponseField name="Location" type="header">
+  Redirect to application homepage
+</ResponseField>
+
+#### Facebook User Profile
+
+The API fetches the following information from Facebook Graph API v24.0:
+
+```json
+{
+  "id": "facebook-user-id",
+  "name": "John Doe",
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john.doe@facebook.com",
+  "picture": {
+    "data": {
+      "url": "https://..."
+    }
+  }
+}
+```
+
+#### Error Responses
+
+<ResponseField name="400 Bad Request">
+  Invalid state parameter or OAuth exchange error
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+  Unexpected error during OAuth flow or user creation
+</ResponseField>
+
+---
+
+## OAuth Configuration
+
+OAuth providers require configuration via environment variables:
+
+### Google Configuration
+
+<ParamField path="GOOGLE_OAUTH_CLIENT_ID" type="string" required>
+  Google OAuth 2.0 client ID from Google Cloud Console
+</ParamField>
+
+<ParamField path="GOOGLE_OAUTH_CLIENT_SECRET" type="string" required>
+  Google OAuth 2.0 client secret from Google Cloud Console
+</ParamField>
+
+### Facebook Configuration
+
+<ParamField path="FACEBOOK_OAUTH_CLIENT_ID" type="string" required>
+  Facebook App ID from Facebook Developers Console
+</ParamField>
+
+<ParamField path="FACEBOOK_OAUTH_CLIENT_SECRET" type="string" required>
+  Facebook App Secret from Facebook Developers Console
+</ParamField>
+
+---
+
+## User Account Creation
+
+When a user authenticates via OAuth for the first time:
+
+1. **Check Existing Account**: The API checks if a user with the provider ID already exists
+2. **Create New User**: If not found, creates a new user account with:
+   - UUID v7 user ID
+   - First name and last name from OAuth provider
+   - Email address from OAuth provider
+   - No password hash (OAuth users don't have passwords)
+   - No phone number initially
+   - Auth provider type (`google` or `facebook`)
+   - Provider ID (unique identifier from OAuth provider)
+   - JWT refresh version set to 0
+
+3. **Generate Tokens**: Creates JWT access and refresh tokens
+4. **Return Tokens**: Sets tokens as HTTP-only cookies
+
+### User Record Example
+
+```go
+domain.User{
+    Id:                "018c...",  // UUID v7
+    FirstName:         "John",
+    LastName:          "Doe",
+    Email:             "john.doe@gmail.com",
+    PhoneNumber:       nil,       // Not provided by OAuth
+    PasswordHash:      nil,       // No password for OAuth users
+    JwtRefreshVersion: 0,
+    PreferredLang:     nil,
+    AuthProvider:      "google",  // or "facebook"
+    ProviderId:        "1234567890"
+}
+```
+
+---
+
+## Security Considerations
+
+### State Parameter
+
+The OAuth state parameter prevents CSRF attacks:
+
+1. **Generation**: Random state value is generated when initiating OAuth flow
+2. **Storage**: State is stored in an HTTP-only cookie
+3. **Validation**: On callback, the state parameter is validated against the cookie
+4. **Error**: If validation fails, the request is rejected with a 400 error
+
+### Token Security
+
+JWT tokens returned after OAuth authentication have the same security properties as regular JWT login:
+
+- HTTP-only cookies (XSS protection)
+- SameSite: Lax (CSRF protection)
+- Separate access and refresh tokens
+- Configurable expiration times
+
+### Account Linking
+
+Currently, if a user signs up with email/password and later tries to authenticate with OAuth using the same email:
+
+- A **separate account is created** with the OAuth provider
+- The system does **not automatically link** accounts
+- Users should use the same authentication method they originally signed up with
+
+<Info>
+  Future enhancement: The TODO comments in the code suggest adding a prompt to login with the original method if an OAuth user's email matches an existing account.
+</Info>
+
+---
+
+## Implementation Example
+
+### Frontend Integration
+
+```javascript
+// Add OAuth login buttons to your frontend
+
+function loginWithGoogle() {
+  // Redirect to initiate Google OAuth flow
+  window.location.href = 'https://api.example.com/api/v1/auth/oauth/google';
+}
+
+function loginWithFacebook() {
+  // Redirect to initiate Facebook OAuth flow
+  window.location.href = 'https://api.example.com/api/v1/auth/oauth/facebook';
+}
+
+// The OAuth flow will:
+// 1. Redirect to provider (Google/Facebook)
+// 2. User authorizes on provider's site
+// 3. Provider redirects to callback endpoint
+// 4. Callback sets JWT cookies and redirects to http://localhost:8080/
+// 5. User is now authenticated with JWT tokens in cookies
+```
+
+### Backend Configuration
+
+```bash
+# .env file
+GOOGLE_OAUTH_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your-google-client-secret
+
+FACEBOOK_OAUTH_CLIENT_ID=your-facebook-app-id
+FACEBOOK_OAUTH_CLIENT_SECRET=your-facebook-app-secret
+```
+
+### Redirect URIs
+
+Make sure to configure these redirect URIs in your OAuth provider consoles:
+
+- **Google Cloud Console**: `http://localhost:8080/api/v1/auth/callback/google`
+- **Facebook Developers Console**: `http://localhost:8080/api/v1/auth/callback/facebook`
+
+<Warning>
+  Update redirect URIs to use your production domain when deploying to production.
+</Warning>

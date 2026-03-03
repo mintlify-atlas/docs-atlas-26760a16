@@ -1,0 +1,516 @@
+---
+title: Services
+description: Manage services, group bookings, and service categories
+---
+
+Create and manage individual services and group booking services with pricing, duration, and inventory tracking.
+
+## Create Service
+
+<Note>
+Requires authentication.
+</Note>
+
+Create a new individual booking service with multiple phases.
+
+```bash POST /api/v1/merchant/services
+curl -X POST 'https://api.example.com/api/v1/merchant/services' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Haircut and Style",
+    "description": "Professional haircut with styling",
+    "color": "#FF5733",
+    "price": {"amount": 5000, "currency": "USD"},
+    "cost": {"amount": 1000, "currency": "USD"},
+    "price_type": "fixed",
+    "category_id": 1,
+    "is_active": true,
+    "settings": {
+      "cancel_deadline": 1440,
+      "booking_window_min": 60,
+      "booking_window_max": 10080,
+      "buffer_time": 15
+    },
+    "phases": [
+      {
+        "name": "Haircut",
+        "sequence": 1,
+        "duration": 30,
+        "phase_type": "active"
+      },
+      {
+        "name": "Styling",
+        "sequence": 2,
+        "duration": 15,
+        "phase_type": "active"
+      }
+    ],
+    "used_products": [
+      {"id": 1, "amount_used": 50},
+      {"id": 2, "amount_used": 20}
+    ]
+  }'
+```
+
+<ParamField body="name" type="string" required>
+  Service name
+</ParamField>
+
+<ParamField body="description" type="string" optional>
+  Detailed service description
+</ParamField>
+
+<ParamField body="color" type="string" required>
+  Hex color code for calendar display (must be valid hex color)
+</ParamField>
+
+<ParamField body="price" type="object" optional>
+  Service price
+  <Expandable title="Properties">
+    <ParamField body="amount" type="integer">
+      Price in smallest currency unit (cents)
+    </ParamField>
+    <ParamField body="currency" type="string">
+      Three-letter currency code
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="cost" type="object" optional>
+  Service cost for internal tracking
+</ParamField>
+
+<ParamField body="price_type" type="string" required>
+  Pricing type: "fixed", "free", "variable", or "starting_at"
+</ParamField>
+
+<ParamField body="category_id" type="integer" optional>
+  Service category ID for organization
+</ParamField>
+
+<ParamField body="is_active" type="boolean" required>
+  Whether service is available for booking
+</ParamField>
+
+<ParamField body="settings" type="object" required>
+  Service-specific scheduling settings (overrides merchant defaults if set)
+  <Expandable title="Properties">
+    <ParamField body="cancel_deadline" type="integer" optional>
+      Cancellation deadline in minutes
+    </ParamField>
+    <ParamField body="booking_window_min" type="integer" optional>
+      Minimum advance booking time in minutes
+    </ParamField>
+    <ParamField body="booking_window_max" type="integer" optional>
+      Maximum advance booking time in minutes
+    </ParamField>
+    <ParamField body="buffer_time" type="integer" optional>
+      Buffer time after service in minutes
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="phases" type="array" required>
+  Service phases defining duration and type
+  <Expandable title="Phase object">
+    <ParamField body="name" type="string" required>
+      Phase name
+    </ParamField>
+    <ParamField body="sequence" type="integer" required>
+      Order sequence (1, 2, 3...)
+    </ParamField>
+    <ParamField body="duration" type="integer" required>
+      Duration in minutes (1-1440)
+    </ParamField>
+    <ParamField body="phase_type" type="string" required>
+      "active" for work time or "wait" for waiting time
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="used_products" type="array" required>
+  Products consumed by this service
+  <Expandable title="Product usage object">
+    <ParamField body="id" type="integer" required>
+      Product ID
+    </ParamField>
+    <ParamField body="amount_used" type="integer" required>
+      Quantity used per service (0-1000000)
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+Returns `201 Created` on success.
+
+## Update Service
+
+<Note>
+Requires authentication.
+</Note>
+
+Update an existing service.
+
+```bash PUT /api/v1/merchant/services/{id}
+curl -X PUT 'https://api.example.com/api/v1/merchant/services/1' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "id": 1,
+    "name": "Premium Haircut",
+    "description": "Premium haircut with styling",
+    "color": "#FF5733",
+    "price": {"amount": 7500, "currency": "USD"},
+    "cost": {"amount": 1500, "currency": "USD"},
+    "price_type": "fixed",
+    "category_id": 1,
+    "is_active": true,
+    "settings": {},
+    "phases": [
+      {
+        "id": 1,
+        "service_id": 1,
+        "name": "Haircut",
+        "sequence": 1,
+        "duration": 45,
+        "phase_type": "active"
+      }
+    ]
+  }'
+```
+
+<ParamField path="id" type="integer" required>
+  Service ID
+</ParamField>
+
+Body parameters are the same as create, with phases including their IDs.
+
+## Delete Service
+
+<Note>
+Requires authentication.
+</Note>
+
+Delete a service.
+
+```bash DELETE /api/v1/merchant/services/{id}
+curl -X DELETE 'https://api.example.com/api/v1/merchant/services/1' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="integer" required>
+  Service ID to delete
+</ParamField>
+
+## Get Service
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve a single service with all details.
+
+```bash GET /api/v1/merchant/services/{id}
+curl -X GET 'https://api.example.com/api/v1/merchant/services/1' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="integer" required>
+  Service ID
+</ParamField>
+
+<ResponseField name="id" type="integer">
+  Service ID
+</ResponseField>
+
+<ResponseField name="category_id" type="integer" optional>
+  Service category ID
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Service name
+</ResponseField>
+
+<ResponseField name="description" type="string" optional>
+  Service description
+</ResponseField>
+
+<ResponseField name="color" type="string">
+  Hex color code
+</ResponseField>
+
+<ResponseField name="total_duration" type="integer">
+  Total duration in minutes (sum of all phases)
+</ResponseField>
+
+<ResponseField name="price" type="object" optional>
+  Service price
+</ResponseField>
+
+<ResponseField name="cost" type="object" optional>
+  Service cost
+</ResponseField>
+
+<ResponseField name="price_type" type="string">
+  Pricing type
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Active status
+</ResponseField>
+
+<ResponseField name="sequence" type="integer">
+  Display order sequence
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  Service-specific settings
+</ResponseField>
+
+<ResponseField name="phases" type="array">
+  Service phases with IDs
+</ResponseField>
+
+<ResponseField name="used_products" type="array">
+  Products used by this service
+  <Expandable title="Product object">
+    <ResponseField name="id" type="integer">
+      Product ID
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Product name
+    </ResponseField>
+    <ResponseField name="unit" type="string">
+      Unit of measurement
+    </ResponseField>
+    <ResponseField name="amount_used" type="integer">
+      Quantity used per service
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Get All Services
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve all services grouped by category.
+
+```bash GET /api/v1/merchant/services
+curl -X GET 'https://api.example.com/api/v1/merchant/services' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns an array of category groups:
+
+<ResponseField name="id" type="integer" optional>
+  Category ID (null for uncategorized)
+</ResponseField>
+
+<ResponseField name="name" type="string" optional>
+  Category name
+</ResponseField>
+
+<ResponseField name="sequence" type="integer" optional>
+  Category display order
+</ResponseField>
+
+<ResponseField name="services" type="array">
+  Services in this category
+</ResponseField>
+
+## Update Service Products
+
+<Note>
+Requires authentication.
+</Note>
+
+Update the products used by a service.
+
+```bash PUT /api/v1/merchant/services/{id}/products
+curl -X PUT 'https://api.example.com/api/v1/merchant/services/1/products' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "service_id": 1,
+    "used_products": [
+      {"id": 1, "amount_used": 75},
+      {"id": 3, "amount_used": 10}
+    ]
+  }'
+```
+
+<ParamField path="id" type="integer" required>
+  Service ID
+</ParamField>
+
+<ParamField body="service_id" type="integer" required>
+  Service ID (must match path parameter)
+</ParamField>
+
+<ParamField body="used_products" type="array" required>
+  Updated product usage list
+</ParamField>
+
+## Activate Service
+
+<Note>
+Requires authentication.
+</Note>
+
+Activate a service to make it available for booking.
+
+```bash PATCH /api/v1/merchant/services/{id}/activate
+curl -X PATCH 'https://api.example.com/api/v1/merchant/services/1/activate' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="integer" required>
+  Service ID
+</ParamField>
+
+## Deactivate Service
+
+<Note>
+Requires authentication.
+</Note>
+
+Deactivate a service to prevent new bookings.
+
+```bash PATCH /api/v1/merchant/services/{id}/deactivate
+curl -X PATCH 'https://api.example.com/api/v1/merchant/services/1/deactivate' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="integer" required>
+  Service ID
+</ParamField>
+
+## Reorder Services
+
+<Note>
+Requires authentication.
+</Note>
+
+Update the display order of services within a category.
+
+```bash PUT /api/v1/merchant/services/reorder
+curl -X PUT 'https://api.example.com/api/v1/merchant/services/reorder' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "category_id": 1,
+    "services": [3, 1, 2, 5]
+  }'
+```
+
+<ParamField body="category_id" type="integer" optional>
+  Category ID (null for uncategorized services)
+</ParamField>
+
+<ParamField body="services" type="array" required>
+  Array of service IDs in desired order
+</ParamField>
+
+## Get Form Options
+
+<Note>
+Requires authentication.
+</Note>
+
+Get available products and categories for service creation forms.
+
+```bash GET /api/v1/merchant/services/form-options
+curl -X GET 'https://api.example.com/api/v1/merchant/services/form-options' \
+  --cookie "session_token=your_session_token"
+```
+
+<ResponseField name="products" type="array">
+  Available products
+  <Expandable title="Product object">
+    <ResponseField name="id" type="integer">
+      Product ID
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Product name
+    </ResponseField>
+    <ResponseField name="unit" type="string">
+      Unit of measurement
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="categories" type="array">
+  Available service categories
+  <Expandable title="Category object">
+    <ResponseField name="id" type="integer">
+      Category ID
+    </ResponseField>
+    <ResponseField name="merchant_id" type="string">
+      Merchant UUID
+    </ResponseField>
+    <ResponseField name="location_id" type="integer">
+      Location ID
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Category name
+    </ResponseField>
+    <ResponseField name="sequence" type="integer">
+      Display order
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Group Booking Services
+
+Group services allow multiple participants to book the same time slot.
+
+### Create Group Service
+
+```bash POST /api/v1/merchant/services/group
+curl -X POST 'https://api.example.com/api/v1/merchant/services/group' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Yoga Class",
+    "description": "Group yoga session",
+    "color": "#4CAF50",
+    "price": {"amount": 2500, "currency": "USD"},
+    "cost": {"amount": 500, "currency": "USD"},
+    "price_type": "fixed",
+    "duration": 60,
+    "category_id": 2,
+    "min_participants": 3,
+    "max_participants": 15,
+    "is_active": true,
+    "settings": {},
+    "used_products": []
+  }'
+```
+
+<ParamField body="min_participants" type="integer" optional>
+  Minimum participants required
+</ParamField>
+
+<ParamField body="max_participants" type="integer" required>
+  Maximum participants allowed
+</ParamField>
+
+<ParamField body="duration" type="integer" required>
+  Session duration in minutes
+</ParamField>
+
+### Update Group Service
+
+```bash PUT /api/v1/merchant/services/group/{id}
+```
+
+### Get Group Service
+
+```bash GET /api/v1/merchant/services/group/{id}
+curl -X GET 'https://api.example.com/api/v1/merchant/services/group/1' \
+  --cookie "session_token=your_session_token"
+```

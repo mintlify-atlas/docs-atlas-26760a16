@@ -1,0 +1,234 @@
+---
+title: Blocked Times
+description: Manage unavailable time periods for team members
+---
+
+Create and manage blocked time periods when team members are unavailable for bookings, such as breaks, vacations, or appointments.
+
+## Create Blocked Time
+
+<Note>
+Requires authentication.
+</Note>
+
+Create a new blocked time period.
+
+```bash POST /api/v1/merchant/blocked-times
+curl -X POST 'https://api.example.com/api/v1/merchant/blocked-times' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Lunch Break",
+    "blocked_type_id": 1,
+    "from_date": "2026-03-03T12:00:00Z",
+    "to_date": "2026-03-03T13:00:00Z",
+    "all_day": false
+  }'
+```
+
+<ParamField body="name" type="string" required>
+  Name or description of the blocked time
+</ParamField>
+
+<ParamField body="blocked_type_id" type="integer" optional>
+  ID of the blocked time type (for categorization)
+</ParamField>
+
+<ParamField body="from_date" type="string" required>
+  Start date and time in ISO 8601 format
+</ParamField>
+
+<ParamField body="to_date" type="string" required>
+  End date and time in ISO 8601 format
+</ParamField>
+
+<ParamField body="all_day" type="boolean" required>
+  Whether this is an all-day block (ignores specific times if true)
+</ParamField>
+
+### Response
+
+Returns `201 Created` on success.
+
+## Update Blocked Time
+
+<Note>
+Requires authentication.
+</Note>
+
+Update an existing blocked time period.
+
+```bash PUT /api/v1/merchant/blocked-times/{id}
+curl -X PUT 'https://api.example.com/api/v1/merchant/blocked-times/1' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "id": 1,
+    "name": "Extended Lunch",
+    "blocked_type_id": 1,
+    "from_date": "2026-03-03T12:00:00Z",
+    "to_date": "2026-03-03T14:00:00Z",
+    "all_day": false
+  }'
+```
+
+<ParamField path="id" type="integer" required>
+  Blocked time ID
+</ParamField>
+
+<ParamField body="id" type="integer" required>
+  Blocked time ID (must match path parameter)
+</ParamField>
+
+Other body parameters are the same as create.
+
+## Delete Blocked Time
+
+<Note>
+Requires authentication.
+</Note>
+
+Delete a blocked time period.
+
+```bash DELETE /api/v1/merchant/blocked-times/{id}
+curl -X DELETE 'https://api.example.com/api/v1/merchant/blocked-times/1' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="integer" required>
+  Blocked time ID to delete
+</ParamField>
+
+## Blocked Time Types
+
+Blocked time types provide categorization and visual distinction for different kinds of unavailability.
+
+### Common Use Cases
+
+- **Breaks**: Lunch, coffee breaks
+- **Vacation**: Planned time off
+- **Sick Leave**: Unplanned absence
+- **Appointments**: External appointments or meetings
+- **Training**: Professional development time
+- **Administrative**: Paperwork, planning time
+
+## All-Day Blocked Times
+
+When `all_day` is set to `true`:
+
+- The specific times in `from_date` and `to_date` are ignored
+- The entire day(s) between the dates are blocked
+- Useful for vacations, holidays, or full-day events
+
+```json
+{
+  "name": "Vacation",
+  "from_date": "2026-04-01T00:00:00Z",
+  "to_date": "2026-04-07T23:59:59Z",
+  "all_day": true
+}
+```
+
+This blocks all of April 1-7, 2026.
+
+## Time-Specific Blocked Times
+
+When `all_day` is `false`:
+
+- Use specific times in the ISO 8601 format
+- Blocks only the specified time range
+- Can span multiple days if needed
+
+```json
+{
+  "name": "Conference Call",
+  "from_date": "2026-03-03T14:00:00Z",
+  "to_date": "2026-03-03T15:30:00Z",
+  "all_day": false
+}
+```
+
+This blocks only 2:00 PM - 3:30 PM on March 3.
+
+## Integration with Calendar
+
+Blocked times appear on the merchant calendar and prevent bookings during those periods. The system:
+
+1. Shows blocked times in the calendar view
+2. Prevents customer bookings during blocked periods
+3. Displays the block name and type (if set)
+4. Respects team member assignments (blocks only affect specific team members)
+
+## External Calendar Integration
+
+Blocked times can be automatically created from external calendar integrations (see [Integrations](/api/merchant/integrations)). These blocks:
+
+- Have a `source` field indicating the origin (e.g., "google_calendar")
+- Are automatically synced when the external calendar changes
+- Should not be manually edited (changes will be overwritten)
+- Are removed when the integration is disconnected
+
+## Domain Model
+
+Behind the scenes, blocked times are represented as:
+
+```typescript
+interface BlockedTime {
+  id: number;
+  merchant_id: string; // UUID
+  employee_id: number; // Team member ID
+  blocked_type_id: number | null;
+  name: string;
+  from_date: Date;
+  to_date: Date;
+  all_day: boolean;
+  source: 'manual' | 'google_calendar' | null;
+}
+```
+
+Note: The API automatically associates blocked times with team members based on the authenticated session context.
+
+## Best Practices
+
+### Recurring Blocked Times
+
+For recurring blocks (like daily lunch breaks), create individual instances:
+
+```bash
+# Create lunch break for each day of the week
+for day in {1..5}; do
+  curl -X POST '/api/v1/merchant/blocked-times' \
+    --data '{
+      "name": "Lunch Break",
+      "from_date": "2026-03-0'$day'T12:00:00Z",
+      "to_date": "2026-03-0'$day'T13:00:00Z",
+      "all_day": false
+    }'
+done
+```
+
+### Planning Ahead
+
+1. **Book Vacations Early**: Enter vacation blocks as soon as they're approved
+2. **Regular Breaks**: Set up standard lunch and break times
+3. **Update Promptly**: Remove or update blocks when plans change
+4. **Clear Names**: Use descriptive names that explain the block
+
+### Blocked Time Types
+
+Create blocked time types for common categories:
+
+- Different icons/colors for visual distinction
+- Easier filtering and reporting
+- Consistent categorization across team
+
+See the Blocked Time Types endpoints for managing categories:
+
+```bash
+POST /api/v1/merchant/blocked-time-types
+GET /api/v1/merchant/blocked-time-types
+PUT /api/v1/merchant/blocked-time-types/{id}
+DELETE /api/v1/merchant/blocked-time-types/{id}
+```
+
+(Note: Detailed blocked-time-types endpoints are available but not documented in this page)

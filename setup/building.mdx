@@ -1,0 +1,308 @@
+---
+title: Building & Running
+description: Build and run the Reservations application in development and production
+---
+
+## Development Mode
+
+The development environment runs with hot-reloading enabled for both frontend and backend changes.
+
+### Starting the Development Server
+
+To run the complete application in development mode:
+
+```bash
+make run
+```
+
+This command starts all development processes in parallel:
+
+- **Frontend (Jabulani)**: Vite dev server + Tailwind CSS watcher
+- **Frontend (Tango)**: Vite dev server + Tailwind CSS watcher
+- **Backend**: Air with hot-reloading
+- **Database**: PostgreSQL container
+- **Reverse Proxy**: Caddy server
+
+<Note>
+  The `make run` command uses `make -j 7` to run 7 processes concurrently. You'll see output from all processes in your terminal.
+</Note>
+
+### Development Processes
+
+Each component can also be run individually for debugging:
+
+<CodeGroup>
+```bash Frontend - Jabulani
+npm run dev-jabulani
+```
+
+```bash Frontend - Tango
+npm run dev-tango
+```
+
+```bash Backend with Air
+make air
+```
+
+```bash Database
+make db
+```
+
+```bash Caddy Reverse Proxy
+make caddy
+```
+</CodeGroup>
+
+### Hot Reloading Configuration
+
+The backend uses [Air](https://github.com/air-verse/air) for hot-reloading. Configuration is in `.air.toml`:
+
+```toml .air.toml
+root = "backend"
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o backend/bin/reservations backend/cmd/main.go"
+  bin = "./backend/bin/reservations"
+  include_ext = ["go"]
+  exclude_dir = ["assets", "tmp", "bin", "vendor", "testdata"]
+  delay = 1000
+```
+
+Key features:
+- Watches all `.go` files in the `backend` directory
+- Rebuilds on file changes with 1 second delay
+- Excludes irrelevant directories
+- Logs build errors to `build-errors.log`
+
+### Tailwind CSS Compilation
+
+Tailwind CSS is compiled separately for each frontend app:
+
+<CodeGroup>
+```bash Jabulani (Watch Mode)
+npx @tailwindcss/cli \
+  -i ./frontend/apps/jabulani/input.css \
+  -o ./frontend/apps/jabulani/src/output.css \
+  --watch=always
+```
+
+```bash Tango (Watch Mode)
+npx @tailwindcss/cli \
+  -i ./frontend/apps/tango/input.css \
+  -o ./frontend/apps/tango/src/output.css \
+  --watch=always
+```
+</CodeGroup>
+
+## Production Build
+
+To build the application for production deployment:
+
+```bash
+make build
+```
+
+This command executes the following steps:
+
+<Steps>
+  <Step title="Compile Tailwind CSS (Jabulani)">
+    ```bash
+    npx @tailwindcss/cli \
+      -i ./frontend/apps/jabulani/input.css \
+      -o ./frontend/apps/jabulani/src/output.css \
+      --minify
+    ```
+  </Step>
+
+  <Step title="Compile Tailwind CSS (Tango)">
+    ```bash
+    npx @tailwindcss/cli \
+      -i ./frontend/apps/tango/input.css \
+      -o ./frontend/apps/tango/src/output.css \
+      --minify
+    ```
+  </Step>
+
+  <Step title="Build Frontend (Jabulani)">
+    ```bash
+    npm run build-jabulani
+    ```
+    
+    Creates optimized production bundle in the build directory.
+  </Step>
+
+  <Step title="Build Frontend (Tango)">
+    ```bash
+    npm run build-tango
+    ```
+    
+    Creates optimized production bundle in the build directory.
+  </Step>
+
+  <Step title="Build Email Templates">
+    ```bash
+    npx email export \
+      --dir "backend/emails/templates" \
+      --outDir "backend/emails/out" \
+      --pretty
+    ```
+    
+    <Note>
+      Skip email template building with: `make build skip-email=true`
+    </Note>
+  </Step>
+
+  <Step title="Build Go Backend">
+    The backend is compiled with production tags:
+    
+    <CodeGroup>
+    ```bash Linux/macOS
+    go build \
+      -tags=prod \
+      -o backend/bin/reservations \
+      backend/cmd/main.go
+    ```
+    
+    ```bash Windows
+    go build \
+      -tags=prod \
+      -o backend/bin/reservations.exe \
+      backend/cmd/main.go
+    ```
+    </CodeGroup>
+    
+    The `-tags=prod` flag enables production-specific code compilation.
+  </Step>
+</Steps>
+
+### Build Output
+
+After a successful build:
+
+- **Backend Binary**: `backend/bin/reservations` (or `reservations.exe` on Windows)
+- **Frontend Bundles**: Built by Vite in each app's build directory
+- **Email Templates**: `backend/emails/out/`
+- **CSS**: Minified Tailwind CSS in each app's `src/output.css`
+
+## Email Template Development
+
+During development, you can preview and develop email templates:
+
+```bash
+make email
+```
+
+This runs the email development server:
+
+```bash
+npx email dev --dir "backend/emails/templates"
+```
+
+Open the provided URL to preview and edit email templates in real-time.
+
+## Testing
+
+Run the test suite for both frontend and backend:
+
+```bash
+make test
+```
+
+This executes:
+
+```bash
+# Backend tests
+go test -v ./backend/...
+
+# Frontend tests
+npm run test
+```
+
+## Linting
+
+Run linters for code quality:
+
+```bash
+make lint
+```
+
+This runs:
+
+```bash
+# Frontend (ESLint)
+npm run lint
+
+# Backend (golangci-lint)
+golangci-lint run
+```
+
+<Warning>
+  Ensure [golangci-lint](/setup/installation) is installed before running the lint command.
+</Warning>
+
+## Platform-Specific Differences
+
+The Makefile handles platform differences automatically:
+
+### Windows
+
+- Executable extension: `.exe`
+- Path separator: `\`
+- Air command adjusts binary path accordingly
+
+### Linux/macOS
+
+- No executable extension
+- Path separator: `/`
+- Standard Unix paths
+
+The Makefile detects the platform using:
+
+```makefile
+ifeq ($(OS),Windows_NT)
+    # Windows-specific commands
+else
+    # Unix-specific commands
+endif
+```
+
+## Troubleshooting
+
+### Build Fails on Windows
+
+Ensure you're using a proper Unix-like shell (Git Bash, WSL) or adjust the Makefile for cmd.exe/PowerShell.
+
+### Port Conflicts
+
+If development servers fail to start, check for port conflicts:
+
+```bash
+# Check what's using port 8080 (backend)
+lsof -i :8080
+
+# Check frontend ports (typically 5173, 5174)
+lsof -i :5173
+```
+
+### Air Not Rebuilding
+
+Check `build-errors.log` for compilation errors:
+
+```bash
+cat backend/build-errors.log
+```
+
+### Tailwind CSS Not Updating
+
+Ensure the Tailwind watcher is running. If styles don't update, restart the watcher:
+
+```bash
+make tailwindcss-jabulani  # or tailwindcss-tango
+```
+
+## Next Steps
+
+- [Configure environment variables](/setup/environment)
+- [Set up the database](/setup/database)
+- [Review installation prerequisites](/setup/installation)

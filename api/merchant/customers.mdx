@@ -1,0 +1,478 @@
+---
+title: Customers
+description: Manage customer information, statistics, and blacklist
+---
+
+Manage customer records, track booking history, and control access through blacklisting.
+
+## Create Customer
+
+<Note>
+Requires authentication.
+</Note>
+
+Create a new customer record.
+
+```bash POST /api/v1/merchant/customers
+curl -X POST 'https://api.example.com/api/v1/merchant/customers' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.doe@example.com",
+    "phone_number": "+1234567890",
+    "birthday": "1990-05-15T00:00:00Z",
+    "note": "Prefers morning appointments"
+  }'
+```
+
+<ParamField body="first_name" type="string" required>
+  Customer's first name
+</ParamField>
+
+<ParamField body="last_name" type="string" required>
+  Customer's last name
+</ParamField>
+
+<ParamField body="email" type="string" optional>
+  Email address
+</ParamField>
+
+<ParamField body="phone_number" type="string" optional>
+  Phone number
+</ParamField>
+
+<ParamField body="birthday" type="timestamp" optional>
+  Date of birth in ISO 8601 format
+</ParamField>
+
+<ParamField body="note" type="string" optional>
+  Internal notes about the customer
+</ParamField>
+
+### Response
+
+Returns `201 Created` on success.
+
+## Update Customer
+
+<Note>
+Requires authentication.
+</Note>
+
+Update customer information.
+
+```bash PUT /api/v1/merchant/customers/{id}
+curl -X PUT 'https://api.example.com/api/v1/merchant/customers/a1b2c3d4-e5f6-7890-abcd-ef1234567890' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.doe@newmail.com",
+    "phone_number": "+1234567890",
+    "birthday": "1990-05-15T00:00:00Z",
+    "note": "Updated: Prefers morning appointments, allergic to lavender"
+  }'
+```
+
+<ParamField path="id" type="string" required>
+  Customer UUID
+</ParamField>
+
+<ParamField body="id" type="string" required>
+  Customer UUID (must match path parameter)
+</ParamField>
+
+Other body parameters are the same as create.
+
+## Delete Customer
+
+<Note>
+Requires authentication.
+</Note>
+
+Delete a customer record.
+
+```bash DELETE /api/v1/merchant/customers/{id}
+curl -X DELETE 'https://api.example.com/api/v1/merchant/customers/a1b2c3d4-e5f6-7890-abcd-ef1234567890' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="string" required>
+  Customer UUID to delete
+</ParamField>
+
+<Warning>
+Deleting customers with booking history may affect reporting. Consider using notes or internal flags instead.
+</Warning>
+
+## Get Customer
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve a customer's basic information.
+
+```bash GET /api/v1/merchant/customers/{id}
+curl -X GET 'https://api.example.com/api/v1/merchant/customers/a1b2c3d4-e5f6-7890-abcd-ef1234567890' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="string" required>
+  Customer UUID
+</ParamField>
+
+<ResponseField name="id" type="string">
+  Customer UUID
+</ResponseField>
+
+<ResponseField name="first_name" type="string" optional>
+  First name
+</ResponseField>
+
+<ResponseField name="last_name" type="string" optional>
+  Last name
+</ResponseField>
+
+<ResponseField name="email" type="string" optional>
+  Email address
+</ResponseField>
+
+<ResponseField name="phone_number" type="string" optional>
+  Phone number
+</ResponseField>
+
+<ResponseField name="birthday" type="timestamp" optional>
+  Date of birth
+</ResponseField>
+
+<ResponseField name="note" type="string" optional>
+  Internal notes
+</ResponseField>
+
+<ResponseField name="is_dummy" type="boolean">
+  Whether this is a placeholder customer record
+</ResponseField>
+
+## Get Customer Statistics
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve detailed statistics and booking history for a customer.
+
+```bash GET /api/v1/merchant/customers/{id}/stats
+curl -X GET 'https://api.example.com/api/v1/merchant/customers/a1b2c3d4-e5f6-7890-abcd-ef1234567890/stats' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="string" required>
+  Customer UUID
+</ParamField>
+
+<ResponseField name="id" type="string">
+  Customer UUID
+</ResponseField>
+
+<ResponseField name="first_name" type="string" optional>
+  First name
+</ResponseField>
+
+<ResponseField name="last_name" type="string" optional>
+  Last name
+</ResponseField>
+
+<ResponseField name="email" type="string" optional>
+  Email address
+</ResponseField>
+
+<ResponseField name="phone_number" type="string" optional>
+  Phone number
+</ResponseField>
+
+<ResponseField name="birthday" type="timestamp" optional>
+  Date of birth
+</ResponseField>
+
+<ResponseField name="note" type="string" optional>
+  Internal notes
+</ResponseField>
+
+<ResponseField name="is_dummy" type="boolean">
+  Placeholder customer flag
+</ResponseField>
+
+<ResponseField name="is_blacklisted" type="boolean">
+  Whether customer is blacklisted
+</ResponseField>
+
+<ResponseField name="blacklist_reason" type="string" optional>
+  Reason for blacklisting
+</ResponseField>
+
+<ResponseField name="times_booked" type="integer">
+  Total number of bookings made
+</ResponseField>
+
+<ResponseField name="times_cancelled_by_user" type="integer">
+  Number of bookings cancelled by customer
+</ResponseField>
+
+<ResponseField name="times_upcoming" type="integer">
+  Number of upcoming bookings
+</ResponseField>
+
+<ResponseField name="bookings" type="array">
+  Complete booking history
+  <Expandable title="Booking object">
+    <ResponseField name="from_date" type="timestamp">
+      Booking start time
+    </ResponseField>
+    <ResponseField name="to_date" type="timestamp">
+      Booking end time
+    </ResponseField>
+    <ResponseField name="service_name" type="string">
+      Name of booked service
+    </ResponseField>
+    <ResponseField name="cancel_deadline" type="integer">
+      Cancellation deadline in minutes
+    </ResponseField>
+    <ResponseField name="formatted_location" type="string">
+      Location address
+    </ResponseField>
+    <ResponseField name="price" type="object">
+      Formatted price
+    </ResponseField>
+    <ResponseField name="price_type" type="string">
+      Pricing type
+    </ResponseField>
+    <ResponseField name="merchant_name" type="string">
+      Merchant name
+    </ResponseField>
+    <ResponseField name="is_cancelled" type="boolean">
+      Whether booking was cancelled
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Get All Customers
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve all customers with summary statistics.
+
+```bash GET /api/v1/merchant/customers
+curl -X GET 'https://api.example.com/api/v1/merchant/customers' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns an array of customer objects:
+
+<ResponseField name="id" type="string">
+  Customer UUID
+</ResponseField>
+
+<ResponseField name="first_name" type="string" optional>
+  First name
+</ResponseField>
+
+<ResponseField name="last_name" type="string" optional>
+  Last name
+</ResponseField>
+
+<ResponseField name="email" type="string" optional>
+  Email address
+</ResponseField>
+
+<ResponseField name="phone_number" type="string" optional>
+  Phone number
+</ResponseField>
+
+<ResponseField name="birthday" type="timestamp" optional>
+  Date of birth
+</ResponseField>
+
+<ResponseField name="note" type="string" optional>
+  Internal notes
+</ResponseField>
+
+<ResponseField name="is_dummy" type="boolean">
+  Placeholder customer flag
+</ResponseField>
+
+<ResponseField name="is_blacklisted" type="boolean">
+  Blacklist status
+</ResponseField>
+
+<ResponseField name="blacklist_reason" type="string" optional>
+  Blacklist reason
+</ResponseField>
+
+<ResponseField name="times_booked" type="integer">
+  Total bookings
+</ResponseField>
+
+<ResponseField name="times_cancelled" type="integer">
+  Total cancellations
+</ResponseField>
+
+## Blacklist Customer
+
+<Note>
+Requires authentication.
+</Note>
+
+Add a customer to the blacklist to prevent future bookings.
+
+```bash PUT /api/v1/merchant/customers/{id}/blacklist
+curl -X PUT 'https://api.example.com/api/v1/merchant/customers/a1b2c3d4-e5f6-7890-abcd-ef1234567890/blacklist' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "blacklist_reason": "Multiple no-shows without notice"
+  }'
+```
+
+<ParamField path="id" type="string" required>
+  Customer UUID
+</ParamField>
+
+<ParamField body="id" type="string" required>
+  Customer UUID (must match path parameter)
+</ParamField>
+
+<ParamField body="blacklist_reason" type="string" optional>
+  Reason for blacklisting (internal use only)
+</ParamField>
+
+## Remove from Blacklist
+
+<Note>
+Requires authentication.
+</Note>
+
+Remove a customer from the blacklist.
+
+```bash DELETE /api/v1/merchant/customers/{id}/blacklist
+curl -X DELETE 'https://api.example.com/api/v1/merchant/customers/a1b2c3d4-e5f6-7890-abcd-ef1234567890/blacklist' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="string" required>
+  Customer UUID
+</ParamField>
+
+## Get Blacklisted Customers
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve all blacklisted customers.
+
+```bash GET /api/v1/merchant/customers/blacklist
+curl -X GET 'https://api.example.com/api/v1/merchant/customers/blacklist' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns an array with the same structure as Get All Customers, filtered to blacklisted customers only.
+
+## Transfer Bookings
+
+<Note>
+Requires authentication.
+</Note>
+
+Transfer all bookings from one customer to another (useful for merging duplicate records).
+
+```bash PUT /api/v1/merchant/customers/transfer
+curl -X PUT 'https://api.example.com/api/v1/merchant/customers/transfer' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "from_customer_id": "old-customer-uuid",
+    "to_customer_id": "new-customer-uuid"
+  }'
+```
+
+<ParamField body="from_customer_id" type="string" required>
+  UUID of source customer (bookings will be transferred from this customer)
+</ParamField>
+
+<ParamField body="to_customer_id" type="string" required>
+  UUID of destination customer (bookings will be transferred to this customer)
+</ParamField>
+
+## Calendar Customers
+
+Get a simplified list of customers for calendar display:
+
+```bash GET /api/v1/merchant/calendar/customers
+curl -X GET 'https://api.example.com/api/v1/merchant/calendar/customers' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns an optimized array:
+
+```json
+[
+  {
+    "id": "uuid",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@example.com",
+    "phone_number": "+1234567890",
+    "birthday": "1990-05-15T00:00:00Z",
+    "is_dummy": false,
+    "last_visited": "2026-02-15T14:30:00Z"
+  }
+]
+```
+
+## Dummy Customers
+
+The system automatically creates "dummy" customer records for walk-ins or bookings without full customer details. These records:
+
+- Have `is_dummy: true`
+- May have incomplete information
+- Can be converted to full customer records by updating with complete details
+- Are useful for tracking appointments without requiring full customer profiles
+
+## Best Practices
+
+### Customer Data
+
+1. **Email or Phone Required**: Collect at least one contact method for booking confirmations
+2. **Notes for Context**: Use the notes field for preferences, allergies, or special requirements
+3. **Birthday Tracking**: Collect birthdays to send special offers and reminders
+
+### Blacklist Usage
+
+1. **Document Reasons**: Always include a blacklist_reason for future reference
+2. **Review Periodically**: Regularly review blacklisted customers
+3. **Clear Communication**: Inform customers of policies to avoid blacklist scenarios
+
+### Duplicate Management
+
+Use the transfer bookings endpoint to:
+1. Identify duplicate customer records
+2. Choose the primary record
+3. Transfer all bookings to the primary record
+4. Delete or archive the duplicate
+
+```bash
+# Example: Merge duplicate customer
+PUT /api/v1/merchant/customers/transfer
+{"from_customer_id": "duplicate-uuid", "to_customer_id": "primary-uuid"}
+
+# Then delete the duplicate
+DELETE /api/v1/merchant/customers/duplicate-uuid
+```

@@ -1,0 +1,608 @@
+---
+title: Repository Pattern
+description: Data access layer and repository implementations
+---
+
+## Overview
+
+The repository pattern abstracts data access behind interfaces defined in the domain layer. Implementations in `backend/internal/repository/db/` use PostgreSQL with the pgx driver.
+
+## Repository Structure
+
+```
+repository/
+├── db/                  # PostgreSQL implementations
+│   ├── booking.go       # Booking data access
+│   ├── merchant.go      # Merchant data access
+│   ├── customer.go      # Customer data access
+│   ├── catalog.go       # Service catalog data access
+│   ├── product.go       # Product inventory
+│   ├── team.go          # Employee data access
+│   ├── user.go          # User authentication
+│   ├── blocked_time.go  # Availability blocking
+│   └── external_calendar.go  # Calendar integration
+├── errors.go            # Repository-level errors
+└── schema.sql           # Database schema
+```
+
+## Implementation Pattern
+
+Each repository follows a consistent structure:
+
+<CodeGroup>
+```go db/booking.go
+package db
+
+import (
+    "context"
+    "github.com/jackc/pgx/v5"
+    "github.com/miketsu-inc/reservations/backend/internal/domain"
+    "github.com/miketsu-inc/reservations/backend/pkg/db"
+)
+
+type bookingRepository struct {
+    db db.DBTX  // Interface for both *pgxpool.Pool and pgx.Tx
+}
+
+func NewBookingRepository(db db.DBTX) domain.BookingRepository {
+    return &bookingRepository{db: db}
+}
+
+// WithTx returns a new repository instance using the transaction
+func (r *bookingRepository) WithTx(tx db.DBTX) domain.BookingRepository {
+    return &bookingRepository{db: tx}
+}
+```
+</CodeGroup>
+
+<Accordion title="DBTX Interface">
+  The `db.DBTX` interface is satisfied by both connection pools and transactions:
+  
+  ```go
+  type DBTX interface {
+      Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+      QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+      Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error)
+  }
+  ```
+  
+  This allows repositories to work seamlessly with or without transactions.
+</Accordion>
+
+## Common Operations
+
+### Insert Operations
+
+<CodeGroup>
+```go db/booking.go
+func (r *bookingRepository) NewBooking(
+    ctx context.Context,
+    booking domain.Booking,
+) (int, error) {
+    query := `
+        INSERT INTO "Booking" (
+            status, booking_type, merchant_id, service_id,
+            location_id, from_date, to_date
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
+    `
+    
+    var bookingId int
+    err := r.db.QueryRow(
+        ctx,
+        query,
+        booking.Status,
+        booking.BookingType,
+        booking.MerchantId,
+        booking.ServiceId,
+        booking.LocationId,
+        booking.FromDate,
+        booking.ToDate,
+    ).Scan(&bookingId)
+    
+    if err != nil {
+        return 0, err
+    }
+    
+    return bookingId, nil
+}
+```
+</CodeGroup>
+
+### Bulk Insert Operations
+
+<CodeGroup>
+```go db/booking.go
+func (r *bookingRepository) NewBookings(
+    ctx context.Context,
+    bookings []domain.Booking,
+) ([]int, error) {
+    query := `
+        INSERT INTO "Booking" (
+            status, booking_type, is_recurring, merchant_id,
+            employee_id, service_id, location_id, booking_series_id,
+            series_original_date, from_date, to_date
+        )
+        SELECT
+            unnest($1::booking_status[]),
+            unnest($2::booking_type[]),
+            unnest($3::boolean[]),
+            unnest($4::uuid[]),
+            unnest($5::int[]),
+            unnest($6::int[]),
+            unnest($7::int[]),
+            unnest($8::int[]),
+            unnest($9::timestamptz[]),
+            unnest($10::timestamptz[]),
+            unnest($11::timestamptz[])
+        RETURNING id
+    `
+    
+    // Prepare arrays for bulk insert
+    statuses := make([]string, len(bookings))
+    types := make([]string, len(bookings))
+    // ... prepare other arrays
+    
+    for i, b := range bookings {
+        statuses[i] = b.Status.String()
+        types[i] = b.BookingType.String()
+        // ... populate arrays
+    }
+    
+    rows, err := r.db.Query(ctx, query, /* array parameters */)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    
+    var bookingIds []int
+    for rows.Next() {
+        var id int
+        if err := rows.Scan(&id); err != nil {
+            return nil, err
+        }
+        bookingIds = append(bookingIds, id)
+    }
+    
+    return bookingIds, nil
+}
+```
+</CodeGroup>
+
+<Accordion title="PostgreSQL Array Operations">
+  The `unnest()` function expands arrays into rows for efficient bulk inserts. This is much faster than individual INSERT statements:
+  
+  - Single query execution
+  - Reduced network overhead
+  - Efficient for batch operations
+  
+  Custom types like `booking_status[]` are PostgreSQL enums defined in the schema.
+</Accordion>
+
+### Update Operations
+
+<CodeGroup>
+```go db/booking.go
+func (r *bookingRepository) UpdateBookingStatus(
+    ctx context.Context,
+    merchantId uuid.UUID,
+    bookingId int,
+    status types.BookingStatus,
+) error {
+    query := `
+        UPDATE "Booking"
+        SET status = $1
+        WHERE id = $2 AND merchant_id = $3
+    `
+    
+    _, err := r.db.Exec(ctx, query, status, bookingId, merchantId)
+    return err
+}
+```
+</CodeGroup>
+
+<Accordion title="Data Isolation">
+  Notice the `WHERE` clause always includes `merchant_id`. This ensures:
+  
+  - Merchants can only access their own data
+  - No accidental cross-merchant operations
+  - Security at the database level
+</Accordion>
+
+### Query Operations
+
+<CodeGroup>
+```go db/booking.go
+func (r *bookingRepository) GetBookingsForCalendar(
+    ctx context.Context,
+    merchantId uuid.UUID,
+    startTime, endTime string,
+) ([]domain.PublicBookingDetails, error) {
+    query := `
+        SELECT
+            b.id,
+            b.from_date,
+            b.to_date,
+            bp.customer_note,
+            bd.merchant_note,
+            s.name as service_name,
+            s.color as service_color,
+            s.total_duration as service_duration,
+            bd.total_price as price,
+            bd.total_cost as cost,
+            c.first_name,
+            c.last_name,
+            c.phone_number
+        FROM "Booking" b
+        JOIN "BookingDetails" bd ON b.id = bd.booking_id
+        JOIN "Service" s ON b.service_id = s.id
+        LEFT JOIN "BookingParticipant" bp ON b.id = bp.booking_id
+        LEFT JOIN "Customer" c ON bp.customer_id = c.id
+        WHERE b.merchant_id = $1
+            AND b.from_date >= $2::timestamptz
+            AND b.to_date <= $3::timestamptz
+            AND b.status != 'cancelled'
+        ORDER BY b.from_date ASC
+    `
+    
+    rows, err := r.db.Query(ctx, query, merchantId, startTime, endTime)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    
+    var bookings []domain.PublicBookingDetails
+    for rows.Next() {
+        var booking domain.PublicBookingDetails
+        err := rows.Scan(
+            &booking.ID,
+            &booking.FromDate,
+            &booking.ToDate,
+            &booking.CustomerNote,
+            &booking.MerchantNote,
+            &booking.ServiceName,
+            &booking.ServiceColor,
+            &booking.ServiceDuration,
+            &booking.Price,
+            &booking.Cost,
+            &booking.FirstName,
+            &booking.LastName,
+            &booking.PhoneNumber,
+        )
+        if err != nil {
+            return nil, err
+        }
+        bookings = append(bookings, booking)
+    }
+    
+    return bookings, rows.Err()
+}
+```
+</CodeGroup>
+
+### Complex Queries
+
+<CodeGroup>
+```go db/merchant.go
+func (r *merchantRepository) GetDashboardStats(
+    ctx context.Context,
+    merchantId uuid.UUID,
+    startDate, endDate, prevStartDate time.Time,
+) (domain.DashboardStatistics, error) {
+    query := `
+        WITH current_period AS (
+            SELECT
+                COUNT(*) FILTER (WHERE status != 'cancelled') as bookings,
+                COUNT(*) FILTER (WHERE status = 'cancelled') as cancellations,
+                COALESCE(SUM(bd.total_price) FILTER (WHERE b.status != 'cancelled'), 0) as revenue,
+                COALESCE(AVG(s.total_duration) FILTER (WHERE b.status != 'cancelled'), 0) as avg_duration
+            FROM "Booking" b
+            JOIN "BookingDetails" bd ON b.id = bd.booking_id
+            JOIN "Service" s ON b.service_id = s.id
+            WHERE b.merchant_id = $1
+                AND b.from_date >= $2
+                AND b.from_date < $3
+        ),
+        previous_period AS (
+            SELECT
+                COUNT(*) FILTER (WHERE status != 'cancelled') as bookings,
+                COUNT(*) FILTER (WHERE status = 'cancelled') as cancellations,
+                COALESCE(SUM(bd.total_price) FILTER (WHERE b.status != 'cancelled'), 0) as revenue,
+                COALESCE(AVG(s.total_duration) FILTER (WHERE b.status != 'cancelled'), 0) as avg_duration
+            FROM "Booking" b
+            JOIN "BookingDetails" bd ON b.id = bd.booking_id
+            JOIN "Service" s ON b.service_id = s.id
+            WHERE b.merchant_id = $1
+                AND b.from_date >= $4
+                AND b.from_date < $2
+        )
+        SELECT
+            c.bookings,
+            c.cancellations,
+            c.revenue,
+            c.avg_duration,
+            CASE WHEN p.bookings > 0
+                THEN ((c.bookings - p.bookings)::float / p.bookings * 100)::int
+                ELSE 0
+            END as bookings_change,
+            CASE WHEN p.cancellations > 0
+                THEN ((c.cancellations - p.cancellations)::float / p.cancellations * 100)::int
+                ELSE 0
+            END as cancellations_change,
+            CASE WHEN p.revenue > 0
+                THEN ((c.revenue - p.revenue)::float / p.revenue * 100)::int
+                ELSE 0
+            END as revenue_change,
+            CASE WHEN p.avg_duration > 0
+                THEN ((c.avg_duration - p.avg_duration)::float / p.avg_duration * 100)::int
+                ELSE 0
+            END as avg_duration_change
+        FROM current_period c, previous_period p
+    `
+    
+    var stats domain.DashboardStatistics
+    err := r.db.QueryRow(
+        ctx, query, merchantId, startDate, endDate, prevStartDate,
+    ).Scan(
+        &stats.Bookings,
+        &stats.Cancellations,
+        &stats.RevenueSum,
+        &stats.AverageDuration,
+        &stats.BookingsChange,
+        &stats.CancellationsChange,
+        &stats.RevenueChange,
+        &stats.AverageDurationChange,
+    )
+    
+    return stats, err
+}
+```
+</CodeGroup>
+
+<Accordion title="Common Table Expressions (CTEs)">
+  CTEs (`WITH` clauses) make complex queries more readable:
+  
+  - Calculate current period stats
+  - Calculate previous period stats
+  - Compare and calculate percentage changes
+  
+  The `FILTER` clause allows conditional aggregation in a single query.
+</Accordion>
+
+## Transaction Management
+
+Transactions are managed by the `TransactionManager`:
+
+<CodeGroup>
+```go pkg/db/transaction.go
+type TransactionManager interface {
+    WithTransaction(ctx context.Context, fn func(tx DBTX) error) error
+}
+
+type transactionManager struct {
+    pool *pgxpool.Pool
+}
+
+func (tm *transactionManager) WithTransaction(
+    ctx context.Context,
+    fn func(tx DBTX) error,
+) error {
+    tx, err := tm.pool.Begin(ctx)
+    if err != nil {
+        return err
+    }
+    
+    defer func() {
+        if p := recover(); p != nil {
+            tx.Rollback(ctx)
+            panic(p)
+        }
+    }()
+    
+    err = fn(tx)
+    if err != nil {
+        tx.Rollback(ctx)
+        return err
+    }
+    
+    return tx.Commit(ctx)
+}
+```
+</CodeGroup>
+
+<Accordion title="Usage in Services">
+  Services use the transaction manager for atomic operations:
+  
+  ```go
+  err := s.txManager.WithTransaction(ctx, func(tx db.DBTX) error {
+      // All operations succeed or all fail
+      bookingRepo := s.bookingRepo.WithTx(tx)
+      customerRepo := s.customerRepo.WithTx(tx)
+      
+      err := bookingRepo.Create(ctx, booking)
+      if err != nil {
+          return err // Automatic rollback
+      }
+      
+      err = customerRepo.Update(ctx, customer)
+      return err // Automatic commit if no error
+  })
+  ```
+</Accordion>
+
+## Database Connection
+
+The connection pool is configured in `pkg/db/db.go`:
+
+<CodeGroup>
+```go pkg/db/db.go
+import (
+    "github.com/jackc/pgx/v5/pgxpool"
+)
+
+func New() *pgxpool.Pool {
+    cfg := config.LoadEnvVars()
+    
+    connString := fmt.Sprintf(
+        "host=%s port=%s dbname=%s user=%s password=%s search_path=%s",
+        cfg.DB_HOST,
+        cfg.DB_PORT,
+        cfg.DB_DATABASE,
+        cfg.DB_USERNAME,
+        cfg.DB_PASSWORD,
+        cfg.DB_SCHEMA,
+    )
+    
+    poolConfig, err := pgxpool.ParseConfig(connString)
+    if err != nil {
+        panic(err)
+    }
+    
+    // Connection pool settings
+    poolConfig.MaxConns = 25
+    poolConfig.MinConns = 5
+    
+    pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+    if err != nil {
+        panic(err)
+    }
+    
+    return pool
+}
+```
+</CodeGroup>
+
+## Type Mapping
+
+### Handling NULL Values
+
+<CodeGroup>
+```go
+import "github.com/jackc/pgx/v5/pgtype"
+
+// For nullable integers
+var employeeId pgtype.Int4
+if booking.EmployeeId == nil {
+    employeeId = pgtype.Int4{Valid: false}
+} else {
+    employeeId = pgtype.Int4{Int32: int32(*booking.EmployeeId), Valid: true}
+}
+
+// For nullable strings, use *string directly
+var name *string
+err := row.Scan(&name)
+```
+</CodeGroup>
+
+### Custom Types
+
+<CodeGroup>
+```go
+// Currency values
+import "github.com/bojanz/currency"
+
+type Price struct {
+    Amount       currency.Amount
+    CurrencyCode string
+}
+
+// Scan from database
+func (p *Price) Scan(src interface{}) error {
+    // Implement pgx Scanner interface
+}
+
+// Value for database
+func (p Price) Value() (driver.Value, error) {
+    // Implement database/sql/driver Valuer interface
+}
+```
+</CodeGroup>
+
+### Enums
+
+<CodeGroup>
+```go
+// PostgreSQL enum types
+CREATE TYPE booking_status AS ENUM ('pending', 'confirmed', 'cancelled');
+CREATE TYPE booking_type AS ENUM ('appointment', 'class', 'event');
+
+// Go representation
+type BookingStatus string
+
+const (
+    BookingStatusPending   BookingStatus = "pending"
+    BookingStatusConfirmed BookingStatus = "confirmed"
+    BookingStatusCancelled BookingStatus = "cancelled"
+)
+
+func (s BookingStatus) String() string {
+    return string(s)
+}
+```
+</CodeGroup>
+
+## Error Handling
+
+<CodeGroup>
+```go db/errors.go
+import "github.com/jackc/pgx/v5/pgconn"
+
+func IsUniqueViolation(err error) bool {
+    var pgErr *pgconn.PgError
+    if errors.As(err, &pgErr) {
+        return pgErr.Code == "23505" // unique_violation
+    }
+    return false
+}
+
+func IsForeignKeyViolation(err error) bool {
+    var pgErr *pgconn.PgError
+    if errors.As(err, &pgErr) {
+        return pgErr.Code == "23503" // foreign_key_violation
+    }
+    return false
+}
+```
+</CodeGroup>
+
+## Query Optimization
+
+<Accordion title="Indexing Strategy">
+  Key indexes for performance:
+  
+  ```sql
+  -- Merchant isolation
+  CREATE INDEX idx_booking_merchant ON "Booking"(merchant_id);
+  
+  -- Date range queries
+  CREATE INDEX idx_booking_dates ON "Booking"(from_date, to_date);
+  
+  -- Status filtering
+  CREATE INDEX idx_booking_status ON "Booking"(status) WHERE status != 'cancelled';
+  
+  -- Composite indexes for common queries
+  CREATE INDEX idx_booking_merchant_date ON "Booking"(merchant_id, from_date);
+  ```
+</Accordion>
+
+<Accordion title="Query Performance">
+  Best practices:
+  
+  - Use `EXPLAIN ANALYZE` to understand query plans
+  - Avoid N+1 queries with JOINs
+  - Use `LEFT JOIN` only when necessary
+  - Filter early with `WHERE` clauses
+  - Limit result sets appropriately
+</Accordion>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Domain Models" icon="cube" href="/backend/domain-models">
+    Review repository interfaces in domain layer
+  </Card>
+  <Card title="Services" icon="gears" href="/backend/services">
+    See how services use repositories
+  </Card>
+</CardGroup>

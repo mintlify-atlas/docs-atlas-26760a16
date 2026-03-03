@@ -1,97 +1,90 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: Introduction
+description: A full-stack SaaS platform for reservation and booking management built with Go and React
 ---
 
-## Setting up
+## Welcome to Reservations
 
-Get your documentation site up and running in minutes.
+Reservations is a comprehensive, multi-tenant booking management platform designed for businesses that need to manage appointments, classes, and customer bookings. Built with modern technologies, it provides both merchant-facing and customer-facing applications to streamline the entire reservation workflow.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+## Key Features
 
-## Make it yours
+Explore the core capabilities that make Reservations a powerful booking management solution:
 
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Multi-Tenant Merchant System" icon="building" iconType="duotone">
+    Complete merchant isolation with custom URL namespaces, role-based access control (Owner, Admin, Staff), and per-merchant settings and preferences.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  
+  <Card title="Smart Booking Management" icon="calendar-check" iconType="duotone">
+    Support for appointments and group classes with recurring booking patterns, automated email confirmations and reminders, and intelligent scheduling with conflict detection.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  
+  <Card title="Calendar & Scheduling" icon="calendar-days" iconType="duotone">
+    Full calendar view powered by FullCalendar, business hours management with timezone support, blocked time management, and external calendar integration (Google, Facebook).
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  
+  <Card title="Customer Experience" icon="users" iconType="duotone">
+    Self-service booking and cancellation, customer profiles with booking history, email notifications in multiple languages, and blacklist management for merchants.
   </Card>
-</Columns>
+  
+  <Card title="Service Catalog" icon="list" iconType="duotone">
+    Flexible service definitions with phases, category organization, pricing and cost tracking with currency support, and min/max participant limits for group bookings.
+  </Card>
+  
+  <Card title="Authentication & Security" icon="shield-check" iconType="duotone">
+    JWT-based authentication with refresh tokens, OAuth support (Google, Facebook), role-based access control, and secure password handling with bcrypt.
+  </Card>
+</CardGroup>
 
-## Create beautiful pages
+## Architecture Overview
 
-Everything you need to create world-class documentation.
+Reservations is built as a monolithic application that serves both API endpoints and two React frontends:
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+- **Backend (Go)**: RESTful API with chi router, PostgreSQL with PostGIS, transactional booking logic
+- **Jabulani (Merchant App)**: React app for business owners and staff to manage bookings
+- **Tango (Customer App)**: React app for customers to browse services and make bookings
 
-## Need inspiration?
+All three components are compiled into a single binary for simplified deployment.
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## Tech Stack Highlights
+
+<CardGroup cols={2}>
+  <Card title="Backend Technologies">
+    - **Go** with chi router
+    - **PostgreSQL** with PostGIS extension
+    - **pgx/v5** for database access
+    - **JWT** authentication
+    - **Resend** for email delivery
+  </Card>
+  
+  <Card title="Frontend Technologies">
+    - **React 19** with React Router
+    - **TanStack Query** for data fetching
+    - **FullCalendar** for scheduling UI
+    - **Tailwind CSS** for styling
+    - **Mapbox** for location features
+  </Card>
+</CardGroup>
+
+## Use Cases
+
+Reservations is ideal for:
+
+- **Service Businesses**: Hair salons, spas, consulting firms
+- **Fitness & Wellness**: Yoga studios, gyms, personal trainers
+- **Education**: Tutoring centers, music lessons, workshops
+- **Healthcare**: Clinics, therapy practices, medical appointments
+- **Events**: Classes, workshops, group activities
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Set up your development environment and run the application locally
+  </Card>
+  
+  <Card title="Architecture" icon="sitemap" href="/architecture">
+    Understand the system architecture and how components interact
+  </Card>
+</CardGroup>

@@ -1,0 +1,280 @@
+---
+title: Database Setup
+description: Set up PostgreSQL with PostGIS for the Reservations application
+---
+
+## Overview
+
+The Reservations application uses PostgreSQL with the PostGIS extension for geospatial functionality. The database stores merchant locations using geographic points, which requires PostGIS support.
+
+## Docker-based Setup
+
+The recommended approach is to use Docker with the official PostGIS image, which includes both PostgreSQL and PostGIS pre-configured.
+
+### Creating the Database
+
+<Steps>
+  <Step title="Ensure environment variables are set">
+    Make sure your `.env` file contains the required database configuration:
+    
+    ```bash .env
+    DB_PORT=5432
+    DB_USERNAME=postgres
+    DB_PASSWORD=your_secure_password
+    DB_DATABASE=reservations
+    ```
+    
+    See the [Environment Configuration](/setup/environment) page for details.
+  </Step>
+
+  <Step title="Create the PostgreSQL container">
+    Use the Make command to create and start the PostgreSQL database:
+    
+    ```bash
+    make create-db
+    ```
+    
+    This command runs the following Docker command:
+    
+    ```bash
+    docker run --name postgresdb \
+      -p ${DB_PORT}:${DB_PORT} \
+      -d \
+      -e POSTGRES_PASSWORD=${DB_PASSWORD} \
+      -e POSTGRES_USER=${DB_USERNAME} \
+      -e POSTGRES_DB=${DB_DATABASE} \
+      -v pgdata:/var/lib/postgresql/data \
+      postgis/postgis
+    ```
+    
+    <Note>
+      The database uses a Docker volume named `pgdata` for persistent storage. Your data will be retained even if the container is removed.
+    </Note>
+  </Step>
+
+  <Step title="Verify the container is running">
+    ```bash
+    docker ps | grep postgresdb
+    ```
+    
+    You should see the `postgresdb` container in the list of running containers.
+  </Step>
+</Steps>
+
+### Managing the Database Container
+
+<CodeGroup>
+```bash Start
+# Start the database (used by make run)
+make db
+
+# Or directly with Docker
+docker start postgresdb
+```
+
+```bash Stop
+docker stop postgresdb
+```
+
+```bash Remove
+# Stop and remove the container
+docker stop postgresdb
+docker rm postgresdb
+
+# To also remove the data volume
+docker volume rm pgdata
+```
+
+```bash View Logs
+docker logs postgresdb
+
+# Follow logs in real-time
+docker logs -f postgresdb
+```
+</CodeGroup>
+
+## Database Schema
+
+The application uses a comprehensive schema defined in `backend/internal/repository/schema.sql`. Key features include:
+
+### PostGIS Extension
+
+The schema enables the PostGIS extension for geospatial support:
+
+```sql
+create extension postgis;
+```
+
+### Custom Types
+
+The schema defines several custom PostgreSQL types:
+
+```sql
+create type price as (
+    number                   numeric,
+    currency                 char(3)
+);
+
+create type booking_status as ENUM ('booked', 'confirmed', 'completed', 'cancelled', 'no-show');
+create type employee_role as ENUM ('owner', 'admin', 'staff');
+create type subscription_tier as ENUM ('free', 'pro', 'enterprise');
+```
+
+### Geospatial Data
+
+The `Location` table uses PostGIS for storing geographic coordinates:
+
+```sql
+create table if not exists "Location" (
+    ID                       serial           primary key unique not null,
+    merchant_id              uuid             references "Merchant" (ID) on delete cascade not null,
+    country                  varchar(50),
+    city                     varchar(50),
+    postal_code              varchar(10),
+    address                  varchar(100),
+    geo_point                geography(Point) not null,  -- PostGIS geography type
+    place_id                 text,
+    formatted_location       text             not null,
+    is_primary               boolean          not null,
+    is_active                boolean          not null default true
+);
+```
+
+### Core Tables
+
+The database includes tables for:
+
+- **User Management**: `User`, `Employee`, `Customer`
+- **Merchant Data**: `Merchant`, `Location`, `Preferences`
+- **Services**: `Service`, `ServiceCategory`, `ServicePhase`, `ServiceProduct`
+- **Bookings**: `Booking`, `BookingDetails`, `BookingParticipant`, `BookingSeries`
+- **Calendar**: `BlockedTime`, `ExternalCalendar`, `ExternalCalendarEvent`
+- **Inventory**: `Product`
+- **Availability**: `BusinessHours`
+
+### Timezone Configuration
+
+The database is configured to use UTC timezone:
+
+```sql
+alter database reservations set timezone to 'UTC';
+select pg_reload_conf();
+```
+
+<Warning>
+  All timestamps are stored in UTC. The application handles timezone conversion based on merchant settings.
+</Warning>
+
+## Connecting to the Database
+
+You can connect to the database using the PostgreSQL command-line client:
+
+```bash
+make connect-db
+```
+
+This runs:
+
+```bash
+docker exec -it postgresdb psql -U ${DB_USERNAME} ${DB_DATABASE}
+```
+
+Once connected, you can run SQL commands:
+
+```sql
+-- List all tables
+\dt
+
+-- Describe a table
+\d "Merchant"
+
+-- Check PostGIS version
+SELECT PostGIS_Version();
+
+-- Exit
+\q
+```
+
+## Alternative Setup (Non-Docker)
+
+If you prefer not to use Docker, you can install PostgreSQL and PostGIS manually:
+
+<Steps>
+  <Step title="Install PostgreSQL">
+    Download and install PostgreSQL from [postgresql.org](https://www.postgresql.org/download/)
+  </Step>
+
+  <Step title="Install PostGIS">
+    Install the PostGIS extension for your PostgreSQL installation:
+    
+    <CodeGroup>
+    ```bash Ubuntu/Debian
+    sudo apt-get install postgis postgresql-<version>-postgis-3
+    ```
+    
+    ```bash macOS
+    brew install postgis
+    ```
+    
+    ```bash Windows
+    # Use the PostGIS installer or Stack Builder during PostgreSQL installation
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Create the database">
+    ```sql
+    CREATE DATABASE reservations;
+    ```
+  </Step>
+
+  <Step title="Enable PostGIS extension">
+    ```sql
+    \c reservations
+    CREATE EXTENSION postgis;
+    ```
+  </Step>
+
+  <Step title="Run the schema">
+    Execute the schema file to create all tables and types:
+    
+    ```bash
+    psql -U postgres -d reservations -f backend/internal/repository/schema.sql
+    ```
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 5432 is already in use, change the `DB_PORT` in your `.env` file:
+
+```bash
+DB_PORT=5433
+```
+
+Then recreate the database container.
+
+### Connection Refused
+
+Ensure the database container is running:
+
+```bash
+docker ps | grep postgresdb
+```
+
+If not running, start it:
+
+```bash
+docker start postgresdb
+```
+
+### PostGIS Extension Not Found
+
+If you see errors about PostGIS, ensure you're using the `postgis/postgis` Docker image, not the standard `postgres` image.
+
+## Next Steps
+
+- [Build the application](/setup/building)
+- [Learn about environment variables](/setup/environment)

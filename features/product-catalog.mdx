@@ -1,0 +1,488 @@
+---
+title: Product Catalog & Services
+description: Manage your service offerings and inventory with flexible pricing, categories, and product tracking
+---
+
+Create and organize your service menu while tracking product inventory used in service delivery.
+
+## Services Overview
+
+Services are the core offerings customers can book. Each service defines what you provide, how long it takes, and what it costs.
+
+<CardGroup cols={2}>
+  <Card title="Service Types" icon="briefcase">
+    - **1-on-1 Appointments**: Individual customer services
+    - **Group Classes**: Multi-participant sessions
+  </Card>
+  
+  <Card title="Service Features" icon="list-check">
+    - Customizable duration and pricing
+    - Multi-phase service workflows
+    - Product usage tracking
+    - Category organization
+  </Card>
+</CardGroup>
+
+## Creating Services
+
+<Tabs>
+  <Tab title="1-on-1 Service">
+    Create individual appointment services:
+    
+    <Steps>
+      <Step title="Click New Service">
+        Navigate to Services → New Service → 1-on-1 service
+      </Step>
+      
+      <Step title="Basic Information">
+        - **Name**: Service display name
+        - **Description**: Details shown to customers
+        - **Category**: Organize into service groups
+        - **Color**: Visual identifier in calendar
+      </Step>
+      
+      <Step title="Pricing">
+        - **Price**: Customer cost
+        - **Cost**: Your cost (for profit tracking)
+        - **Price Type**: Fixed or variable pricing
+      </Step>
+      
+      <Step title="Duration & Phases">
+        - Set total service duration
+        - Or break into multiple phases (e.g., consultation, treatment, follow-up)
+      </Step>
+      
+      <Step title="Scheduling Settings">
+        - **Booking window**: How far in advance customers can book
+        - **Cancel deadline**: Cancellation cutoff time
+        - **Buffer time**: Gap between bookings
+      </Step>
+      
+      <Step title="Product Usage">
+        Link products consumed during this service
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="Group Service">
+    Create classes or group sessions:
+    
+    <Steps>
+      <Step title="Click New Service">
+        Navigate to Services → New Service → Group Service
+      </Step>
+      
+      <Step title="Basic Details">
+        Same as 1-on-1: name, description, category, color
+      </Step>
+      
+      <Step title="Capacity Settings">
+        - **Min participants**: Minimum to run the class
+        - **Max participants**: Maximum capacity
+      </Step>
+      
+      <Step title="Pricing Model">
+        - **Per person**: Each participant pays the price
+        - **Fixed**: Total price regardless of participants
+      </Step>
+      
+      <Step title="Duration">
+        Set single duration (group services don't use phases)
+      </Step>
+      
+      <Step title="Configure Scheduling">
+        Same booking window, cancellation, and buffer settings
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Service Phases
+
+<Info>
+  Break complex services into distinct phases for better time management and customer communication.
+</Info>
+
+### Phase Types
+
+<Accordion title="Active Phases">
+  
+  **Working Time**
+  - Direct customer interaction
+  - Counted toward total service time
+  - Visible to customers
+  
+  Examples: Consultation, Treatment, Training
+  
+</Accordion>
+
+<Accordion title="Buffer Phases">
+  
+  **Preparation Time**
+  - Setup or cleanup between customers
+  - Not charged to customer
+  - Prevents back-to-back scheduling
+  
+  Examples: Room setup, Equipment cleaning
+  
+</Accordion>
+
+### Managing Phases
+
+<img src="/images/service-phases.png" alt="Service Phases Configuration" />
+
+For each phase, configure:
+- Phase name
+- Duration (in minutes)
+- Phase type (active or buffer)
+- Sequence order
+
+Phases run consecutively during the booking time block.
+
+## Service Categories
+
+Organize services into logical groups:
+
+### Creating Categories
+
+<Steps>
+  <Step title="Click New Category">
+    From Services page, click "New category"
+  </Step>
+  
+  <Step title="Name Category">
+    Enter a descriptive category name (e.g., "Hair Services", "Fitness Classes")
+  </Step>
+  
+  <Step title="Save">
+    Category appears in your service list
+  </Step>
+</Steps>
+
+### Category Features
+
+<CardGroup cols={2}>
+  <Card title="Organization" icon="folder">
+    - Group related services together
+    - Shown separately in booking interface
+    - Collapsible sections
+  </Card>
+  
+  <Card title="Ordering" icon="arrow-down-1-9">
+    - Reorder categories with up/down arrows
+    - Drag services within categories
+    - Custom sequence for customer display
+  </Card>
+</CardGroup>
+
+### Uncategorized Services
+
+<Info>
+  Services without a category appear in the "Uncategorized" section, which always displays last.
+</Info>
+
+## Service Display
+
+Services appear as cards in your service list:
+
+<img src="/images/service-cards.png" alt="Service Cards" />
+
+Each card shows:
+- Service name and color indicator
+- Duration and price
+- Booking type badge (1-on-1 or Group)
+- Active/inactive status
+- Quick action menu
+
+### Service Actions
+
+<Tabs>
+  <Tab title="Edit">
+    Modify any service details. Changes apply to future bookings only.
+  </Tab>
+  
+  <Tab title="Activate/Deactivate">
+    Toggle service availability:
+    - **Active**: Available for new bookings
+    - **Inactive**: Hidden from customers, existing bookings unaffected
+  </Tab>
+  
+  <Tab title="Reorder">
+    Move service up or down within its category
+  </Tab>
+  
+  <Tab title="Delete">
+    Remove service permanently (only if no bookings exist)
+  </Tab>
+</Tabs>
+
+## Service Settings
+
+### Booking Window
+
+<Accordion title="Minimum Window">
+  
+  How soon customers can book:
+  - Same day (0 hours)
+  - 24 hours in advance
+  - Custom time period
+  
+  Prevents last-minute bookings that may be impractical.
+  
+</Accordion>
+
+<Accordion title="Maximum Window">
+  
+  How far in advance bookings are allowed:
+  - 30 days (common)
+  - 60 days
+  - 90 days
+  - Custom limit
+  
+  Helps with capacity planning and prevents booking too far ahead.
+  
+</Accordion>
+
+### Cancellation Deadline
+
+Set how late customers can cancel:
+
+- 24 hours before appointment
+- 48 hours before
+- Custom deadline
+
+Late cancellations outside this window may incur penalties (configured elsewhere).
+
+### Buffer Time
+
+<Info>
+  Automatically add gaps between bookings for preparation, cleanup, or travel.
+</Info>
+
+Buffer options:
+- No buffer (back-to-back bookings)
+- 5, 10, 15, or 30 minutes
+- Custom duration
+
+Buffer time appears as unavailable in the calendar.
+
+## Products
+
+Track inventory items used during services:
+
+### Product Information
+
+Each product includes:
+
+<CardGroup cols={2}>
+  <Card title="Basic Details" icon="box">
+    - Product name
+    - Description
+    - Unit of measurement
+    - Price (optional)
+  </Card>
+  
+  <Card title="Inventory" icon="chart-line">
+    - Maximum stock level
+    - Current stock amount
+    - Low stock threshold
+    - Usage tracking
+  </Card>
+</CardGroup>
+
+### Creating Products
+
+<Steps>
+  <Step title="Navigate to Products">
+    Click "Products" in the sidebar
+  </Step>
+  
+  <Step title="Click New Product">
+    Open the new product form
+  </Step>
+  
+  <Step title="Enter Details">
+    - Name (e.g., "Shampoo", "Towels")
+    - Description
+    - Unit (e.g., "bottle", "piece", "ml")
+    - Price (your cost)
+    - Max amount
+    - Current amount
+  </Step>
+  
+  <Step title="Save">
+    Product is added to inventory
+  </Step>
+</Steps>
+
+### Linking Products to Services
+
+Connect products to services for automatic tracking:
+
+1. Edit a service
+2. Scroll to "Product Usage" section
+3. Search and select products
+4. Set amount used per booking
+5. Save service
+
+When the service is booked, inventory automatically decrements.
+
+### Product Table
+
+<img src="/images/products-table.png" alt="Products Inventory Table" />
+
+The products table displays:
+- Product name and description
+- Current vs. max stock levels
+- Price information
+- Services that use this product
+- Quick edit and delete actions
+
+### Low Stock Alerts
+
+<Warning>
+  When product inventory drops below 20% of max amount, alerts appear on the dashboard.
+</Warning>
+
+Low stock notifications show:
+- Product name
+- Current quantity
+- Link to restock
+
+Helps prevent service disruptions due to supply shortages.
+
+### Restocking Products
+
+1. Navigate to Products
+2. Click edit on the product
+3. Update "Current amount" field
+4. Save changes
+
+Consider setting up regular restocking schedules for frequently used items.
+
+## Service Search
+
+Find services quickly:
+
+<CardGroup cols={2}>
+  <Card title="Search Bar" icon="magnifying-glass">
+    Type service name to filter the list in real-time
+  </Card>
+  
+  <Card title="Category Filter" icon="filter">
+    Click categories to show only services in that group
+  </Card>
+</CardGroup>
+
+## Service Pricing
+
+<Tabs>
+  <Tab title="Fixed Pricing">
+    Standard price that never changes:
+    
+    - Set once, applies to all bookings
+    - Simple for customers to understand
+    - Best for consistent services
+  </Tab>
+  
+  <Tab title="Variable Pricing">
+    Price adjusts based on factors:
+    
+    - Time of day
+    - Day of week
+    - Customer type
+    - Special promotions
+    
+    (Advanced pricing coming soon)
+  </Tab>
+  
+  <Tab title="Per-Person Pricing">
+    For group services:
+    
+    - Each participant pays the set price
+    - Total revenue scales with attendance
+    - Good for classes and workshops
+  </Tab>
+</Tabs>
+
+## Service Visibility
+
+<CardGroup cols={2}>
+  <Card title="Active Services" icon="eye">
+    - Visible to customers in booking app
+    - Available for scheduling
+    - Shown in service list
+  </Card>
+  
+  <Card title="Inactive Services" icon="eye-slash">
+    - Hidden from customer booking
+    - Existing bookings remain
+    - Useful for seasonal services
+  </Card>
+</CardGroup>
+
+## Managing Service Order
+
+Control how services appear to customers:
+
+<Accordion title="Category Order">
+  
+  Use up/down arrows on category cards to reorder categories. The order reflects in:
+  - Your service list
+  - Customer booking interface
+  - Service selection dropdowns
+  
+</Accordion>
+
+<Accordion title="Service Order">
+  
+  Within each category, drag services or use reorder buttons to set sequence. First services appear at the top.
+  
+</Accordion>
+
+## Service Analytics
+
+Understand service performance:
+
+- **Booking count**: How often each service is booked
+- **Revenue**: Total earnings per service
+- **Popularity**: Most vs. least booked services
+- **Utilization**: Service capacity usage
+
+(View in Dashboard and Reports)
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Clear Names" icon="font">
+    Use descriptive service names customers will understand immediately
+  </Card>
+  
+  <Card title="Accurate Duration" icon="clock">
+    Include buffer time in service duration for realistic scheduling
+  </Card>
+  
+  <Card title="Category Logic" icon="folder-tree">
+    Group services by type, not by price or duration
+  </Card>
+  
+  <Card title="Regular Reviews" icon="calendar-check">
+    Update pricing and descriptions quarterly
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Create Bookings" icon="calendar-plus" href="/features/booking-management">
+    Schedule services for customers
+  </Card>
+  
+  <Card title="View Calendar" icon="calendar" href="/features/calendar-scheduling">
+    See service bookings in calendar
+  </Card>
+  
+  <Card title="Settings" icon="gear" href="/settings/scheduling">
+    Configure default service settings
+  </Card>
+</CardGroup>

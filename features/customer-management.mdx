@@ -1,0 +1,359 @@
+---
+title: Customer Management
+description: Build and maintain your customer database with detailed profiles, booking history, and relationship management tools
+---
+
+Maintain comprehensive customer records, track engagement, and build lasting relationships with your clients.
+
+## Customer Database
+
+Your centralized customer directory provides quick access to all client information:
+
+<img src="/images/customers-table.png" alt="Customer Database" />
+
+### Customer List Features
+
+- **Searchable table**: Find customers quickly by name
+- **Booking statistics**: See total bookings and cancellations at a glance
+- **Status indicators**: Identify blacklisted or merchant-added customers
+- **Quick actions**: Edit, view details, or manage customer records
+
+## Customer Types
+
+<Tabs>
+  <Tab title="Registered Customers">
+    Customers who created an account through your booking app:
+    
+    - Full profile information
+    - Email and phone verified
+    - Can make their own bookings
+    - Receive booking confirmations and reminders
+    - Cannot be deleted (only blacklisted)
+  </Tab>
+  
+  <Tab title="Merchant-Added Customers">
+    Customers you manually add to the system:
+    
+    - Created by you for walk-in or phone bookings
+    - Limited information (as much as you collect)
+    - Marked with "Customer Added by You" badge
+    - Can be edited or deleted
+    - Can have bookings transferred to other customers
+  </Tab>
+</Tabs>
+
+## Customer Profiles
+
+Access detailed customer information and history:
+
+<CardGroup cols={2}>
+  <Card title="Contact Information" icon="address-card">
+    - First and last name
+    - Email address
+    - Phone number
+    - Birthday (for special occasion reminders)
+  </Card>
+  
+  <Card title="Booking Statistics" icon="chart-simple">
+    - Total completed bookings
+    - Upcoming appointments
+    - Cancellation history
+    - Last visit date
+  </Card>
+</CardGroup>
+
+### Customer Details Page
+
+<img src="/images/customer-profile.png" alt="Customer Profile" />
+
+Each customer profile displays:
+
+<Accordion title="Profile Header">
+  
+  - **Avatar**: Auto-generated from initials
+  - **Name**: Full name with status badges
+  - **Last Visited**: Most recent completed appointment
+  - **Contact Details**: Email, phone, birthday
+  - **Notes**: Your internal notes about the customer
+  
+</Accordion>
+
+<Accordion title="Booking Statistics">
+  
+  Visual breakdown showing:
+  - Total bookings count
+  - Upcoming appointments
+  - Cancellations by customer
+  - Interactive donut chart of booking distribution
+  
+</Accordion>
+
+<Accordion title="Booking History">
+  
+  Complete chronological list of all bookings:
+  - Service name and date
+  - Booking status (completed, upcoming, cancelled)
+  - Price and duration
+  - Customer and merchant notes
+  - Expandable details for each booking
+  
+  Pagination controls for customers with extensive history.
+  
+</Accordion>
+
+## Creating Customers
+
+Add new customers to your database:
+
+<Steps>
+  <Step title="Navigate to Customers">
+    Click "Customers" in the sidebar
+  </Step>
+  
+  <Step title="Click New Customer">
+    Select the "New" button in the customers view
+  </Step>
+  
+  <Step title="Enter Information">
+    Fill in customer details:
+    - First name (required)
+    - Last name (required)
+    - Email (optional)
+    - Phone number (optional)
+    - Birthday (optional)
+    - Notes (optional)
+  </Step>
+  
+  <Step title="Save">
+    Customer is added to your database and available for booking
+  </Step>
+</Steps>
+
+## Editing Customers
+
+<Info>
+  All customer types can be edited. Registered customers can only have notes modified by merchants.
+</Info>
+
+Update customer information:
+
+1. Click the edit icon from the customer list or profile
+2. Modify any editable fields
+3. Save changes
+
+Changes immediately reflect across all bookings and views.
+
+## Customer Notes
+
+Maintain internal notes about your customers:
+
+<CardGroup cols={2}>
+  <Card title="Private Notes" icon="note-sticky">
+    Notes are visible only to you and your team, never to customers.
+  </Card>
+  
+  <Card title="Use Cases" icon="lightbulb">
+    - Preferences and requests
+    - Allergies or special needs
+    - Communication history
+    - Service recommendations
+  </Card>
+</CardGroup>
+
+Notes display on:
+- Customer profile page
+- Booking creation screen
+- Calendar booking details
+
+## Blacklist Management
+
+<Warning>
+  Blacklisting prevents customers from creating new bookings through the customer app.
+</Warning>
+
+### Blacklisting Customers
+
+Restrict problematic customers from booking:
+
+<Steps>
+  <Step title="Open Customer Menu">
+    Click the three-dots menu on the customer profile
+  </Step>
+  
+  <Step title="Select Blacklist">
+    Choose "Blacklist Customer" option
+  </Step>
+  
+  <Step title="Provide Reason">
+    Enter a reason for the blacklist (required for your records)
+  </Step>
+  
+  <Step title="Confirm">
+    Customer is immediately blacklisted
+  </Step>
+</Steps>
+
+### Effects of Blacklisting
+
+- Customer cannot create new bookings through the app
+- Existing bookings remain active
+- Customer still appears in your database
+- Marked with red "Blacklisted" badge
+- You can still create bookings for them manually
+
+### Removing from Blacklist
+
+<Accordion title="Unban Process">
+  
+  1. Open blacklisted customer's profile
+  2. Click three-dots menu
+  3. Select "Unban customer"
+  4. Customer can immediately book again
+  
+  The original blacklist reason is preserved in the customer record.
+  
+</Accordion>
+
+## Viewing Blacklisted Customers
+
+Access your blacklist:
+
+1. Navigate to Customers page
+2. Click the "Blacklist" tab
+3. View all blacklisted customers with reasons
+
+## Transferring Bookings
+
+<Info>
+  Only available for merchant-added customers with existing bookings.
+</Info>
+
+Consolidate duplicate customer records:
+
+<Tabs>
+  <Tab title="When to Transfer">
+    - Discovered duplicate customer entries
+    - Customer requests profile consolidation
+    - Correcting data entry errors
+    - Merging temporary and permanent profiles
+  </Tab>
+  
+  <Tab title="Transfer Process">
+    1. Open the customer profile to transfer FROM
+    2. Click three-dots menu → "Transfer customer"
+    3. Select the target customer to transfer TO
+    4. Confirm transfer
+    5. All bookings move to the target customer
+  </Tab>
+  
+  <Tab title="After Transfer">
+    - All bookings now linked to target customer
+    - Original customer profile remains
+    - Can now delete the empty profile
+    - Booking history preserved
+  </Tab>
+</Tabs>
+
+## Deleting Customers
+
+<Warning>
+  Only merchant-added customers without bookings can be deleted. Registered customers cannot be deleted.
+</Warning>
+
+Delete a customer:
+
+1. Ensure customer has no bookings (or transfer them first)
+2. Click three-dots menu on customer profile
+3. Select "Delete Customer"
+4. Confirm deletion
+
+<Note>
+  Deletion is permanent and cannot be undone. Consider blacklisting instead if you might need the record later.
+</Note>
+
+## Customer Search
+
+Find customers quickly:
+
+<CardGroup cols={2}>
+  <Card title="In Customer List" icon="magnifying-glass">
+    Use the search box to filter by name in real-time
+  </Card>
+  
+  <Card title="In Booking Creation" icon="user-plus">
+    Search and select customers when creating bookings
+  </Card>
+</CardGroup>
+
+## Customer Insights
+
+Understand customer engagement:
+
+<Accordion title="Booking Patterns">
+  
+  The booking history chart shows:
+  - Distribution of completed vs upcoming bookings
+  - Cancellation rate
+  - Engagement trends
+  
+</Accordion>
+
+<Accordion title="Customer Value">
+  
+  Track:
+  - Total revenue from customer (via completed bookings)
+  - Average booking value
+  - Frequency of visits
+  - Customer lifetime value
+  
+</Accordion>
+
+## Participant Management
+
+For group class bookings:
+
+- View all participants enrolled in a class
+- Add or remove individual participants
+- See participant contact information
+- Track class capacity
+
+<Info>
+  When a customer is removed from a group booking, they remain in your customer database.
+</Info>
+
+## Customer Calendar View
+
+When creating bookings in the calendar, access:
+
+- Searchable customer selector
+- Recent customers list
+- Customer profile preview
+- Quick customer creation
+
+## Privacy & Data
+
+<CardGroup cols={2}>
+  <Card title="Data Ownership" icon="shield">
+    All customer data belongs to your business and is stored securely.
+  </Card>
+  
+  <Card title="Customer Access" icon="eye">
+    Registered customers can view and update their own profiles through the booking app.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Create Booking" icon="calendar-plus" href="/features/booking-management">
+    Schedule appointments for customers
+  </Card>
+  
+  <Card title="View Calendar" icon="calendar" href="/features/calendar-scheduling">
+    See customer bookings in context
+  </Card>
+  
+  <Card title="Configure Services" icon="briefcase" href="/features/product-catalog">
+    Set up services customers can book
+  </Card>
+</CardGroup>

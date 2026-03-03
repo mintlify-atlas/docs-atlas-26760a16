@@ -1,0 +1,247 @@
+---
+title: Products
+description: Manage inventory products and stock tracking
+---
+
+Manage inventory products that are consumed by services, with automatic stock tracking and low-stock alerts.
+
+## Create Product
+
+<Note>
+Requires authentication.
+</Note>
+
+Create a new inventory product.
+
+```bash POST /api/v1/merchant/products
+curl -X POST 'https://api.example.com/api/v1/merchant/products' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Shampoo",
+    "description": "Professional salon shampoo",
+    "price": {"amount": 2500, "currency": "USD"},
+    "unit": "ml",
+    "max_amount": 5000,
+    "current_amount": 3500
+  }'
+```
+
+<ParamField body="name" type="string" required>
+  Product name
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Product description (can be empty string)
+</ParamField>
+
+<ParamField body="price" type="object" optional>
+  Product cost or retail price
+  <Expandable title="Properties">
+    <ParamField body="amount" type="integer">
+      Price in smallest currency unit
+    </ParamField>
+    <ParamField body="currency" type="string">
+      Three-letter currency code
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="unit" type="string" required>
+  Unit of measurement (e.g., "ml", "g", "oz", "pieces")
+</ParamField>
+
+<ParamField body="max_amount" type="integer" required>
+  Maximum stock level (0-10,000,000,000)
+</ParamField>
+
+<ParamField body="current_amount" type="integer" required>
+  Current stock level (0-10,000,000,000)
+</ParamField>
+
+### Response
+
+Returns `201 Created` on success.
+
+## Update Product
+
+<Note>
+Requires authentication.
+</Note>
+
+Update an existing product's information and stock levels.
+
+```bash PUT /api/v1/merchant/products/{id}
+curl -X PUT 'https://api.example.com/api/v1/merchant/products/1' \
+  --cookie "session_token=your_session_token" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "id": 1,
+    "name": "Premium Shampoo",
+    "description": "Professional salon shampoo - updated formula",
+    "price": {"amount": 2800, "currency": "USD"},
+    "unit": "ml",
+    "max_amount": 6000,
+    "current_amount": 4200
+  }'
+```
+
+<ParamField path="id" type="integer" required>
+  Product ID
+</ParamField>
+
+<ParamField body="id" type="integer" required>
+  Product ID (must match path parameter)
+</ParamField>
+
+Other body parameters are the same as create.
+
+## Delete Product
+
+<Note>
+Requires authentication.
+</Note>
+
+Delete a product. Note that products currently in use by services cannot be deleted.
+
+```bash DELETE /api/v1/merchant/products/{id}
+curl -X DELETE 'https://api.example.com/api/v1/merchant/products/1' \
+  --cookie "session_token=your_session_token"
+```
+
+<ParamField path="id" type="integer" required>
+  Product ID to delete
+</ParamField>
+
+Returns `200 OK` on success, or `400 Bad Request` if the product is in use.
+
+## Get All Products
+
+<Note>
+Requires authentication.
+</Note>
+
+Retrieve all products with their associated services.
+
+```bash GET /api/v1/merchant/products
+curl -X GET 'https://api.example.com/api/v1/merchant/products' \
+  --cookie "session_token=your_session_token"
+```
+
+Returns an array of products:
+
+<ResponseField name="id" type="integer">
+  Product ID
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Product name
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Product description
+</ResponseField>
+
+<ResponseField name="price" type="object" optional>
+  Product price
+</ResponseField>
+
+<ResponseField name="unit" type="string">
+  Unit of measurement
+</ResponseField>
+
+<ResponseField name="max_amount" type="integer">
+  Maximum stock level
+</ResponseField>
+
+<ResponseField name="current_amount" type="integer">
+  Current stock level
+</ResponseField>
+
+<ResponseField name="services" type="array">
+  Services that use this product
+  <Expandable title="Service object">
+    <ResponseField name="id" type="integer">
+      Service ID
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Service name
+    </ResponseField>
+    <ResponseField name="color" type="string">
+      Service color code
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Stock Management
+
+Products are automatically consumed when services are performed. The system:
+
+1. Tracks product usage per service (defined in service settings)
+2. Decrements stock when bookings are completed
+3. Alerts when stock falls below threshold
+4. Shows low stock products on the dashboard
+
+### Low Stock Alerts
+
+Products appear in the dashboard's `low_stock_products` when inventory is running low. The fill ratio indicates current stock as a percentage of max:
+
+```json
+{
+  "id": 1,
+  "name": "Shampoo",
+  "max_amount": 5000,
+  "current_amount": 750,
+  "unit": "ml",
+  "fill_ratio": 0.15
+}
+```
+
+### Stock Calculations
+
+When a service using products is booked:
+
+```javascript
+// Example: Service uses 50ml shampoo per appointment
+// Current stock: 3500ml
+// After booking: 3500 - 50 = 3450ml
+```
+
+The system prevents bookings when required products are out of stock.
+
+## Product Units
+
+Common unit types:
+
+- **Volume**: ml, l, oz, fl oz
+- **Weight**: g, kg, oz, lb
+- **Count**: pieces, units, applications
+- **Custom**: Any text string describing the unit
+
+### Best Practices
+
+1. **Consistent Units**: Use the same unit system throughout your catalog
+2. **Appropriate Scale**: Choose units that make sense for your usage (ml instead of l for small quantities)
+3. **Clear Names**: Use descriptive product names that identify the specific item
+4. **Regular Updates**: Update stock levels regularly through the update endpoint
+5. **Price Tracking**: Use the price field to track product costs for profitability analysis
+
+## Integration with Services
+
+Products are linked to services through the service endpoints:
+
+```json
+// In service creation/update
+{
+  "used_products": [
+    {"id": 1, "amount_used": 50},
+    {"id": 2, "amount_used": 20}
+  ]
+}
+```
+
+This creates automatic inventory deduction:
+- Product #1: 50 units per service
+- Product #2: 20 units per service
+
+See the [Services documentation](/api/merchant/services) for details on linking products to services.

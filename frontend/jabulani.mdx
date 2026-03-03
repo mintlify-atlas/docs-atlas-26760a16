@@ -1,0 +1,414 @@
+---
+title: Jabulani - Merchant Dashboard
+description: Comprehensive merchant dashboard for managing reservations, services, and business operations
+---
+
+Jabulani is the merchant-facing dashboard application that provides comprehensive tools for managing a reservation-based business.
+
+## Overview
+
+- **Port**: 5173
+- **Purpose**: Merchant dashboard and business management
+- **Authentication**: Required for all routes except signup
+- **Tech Stack**: React 19, TanStack Router, TanStack Query, Tailwind CSS 4
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Calendar Management" icon="calendar">
+    Interactive calendar with drag-and-drop booking management powered by FullCalendar
+  </Card>
+  <Card title="Customer Database" icon="users">
+    Complete customer relationship management with booking history and analytics
+  </Card>
+  <Card title="Service Catalog" icon="list">
+    Manage services, categories, pricing, and scheduling settings
+  </Card>
+  <Card title="Team Management" icon="user-group">
+    Employee scheduling, permissions, and availability
+  </Card>
+  <Card title="Analytics Dashboard" icon="chart-line">
+    Revenue tracking, booking statistics, and business insights
+  </Card>
+  <Card title="Business Settings" icon="cog">
+    Configure business hours, locations, integrations, and preferences
+  </Card>
+</CardGroup>
+
+## Technology Stack
+
+### Core Dependencies
+
+From `frontend/apps/jabulani/package.json`:
+
+- **@fullcalendar/react** (^6.1.20) - Calendar component with multiple views
+- **@fullcalendar/daygrid** (^6.1.20) - Month and day grid views
+- **@fullcalendar/timegrid** (^6.1.20) - Time-based calendar views
+- **@fullcalendar/interaction** (^6.1.20) - Drag-and-drop functionality
+- **@fullcalendar/list** (^6.1.20) - List view for bookings
+- **@mapbox/search-js-react** (^1.5.1) - Location search and mapping
+- **recharts** (^3.6.0) - Revenue charts and analytics visualization
+
+### Shared Dependencies
+
+- **React 19.2.3** - Latest React version
+- **TanStack Router 1.147.1** - File-based routing
+- **TanStack Query 5.90.16** - Server state management
+- **@reservations/components** - Shared UI components
+- **@reservations/lib** - Shared utilities and hooks
+- **@reservations/assets** - Shared icons and images
+
+## Application Structure
+
+### Route Organization
+
+<Tabs>
+  <Tab title="Overview">
+    Jabulani uses nested layouts for consistent UI structure:
+
+    ```
+    routes/
+    ├── __root.jsx              # Root layout
+    ├── index.jsx               # Landing page
+    ├── _authenticated/         # Auth-required routes
+    │   ├── signup/            # Merchant onboarding
+    │   └── _sidepanel/        # Main app with sidebar
+    ```
+
+    All main application features are nested under `_authenticated/_sidepanel/` to ensure consistent navigation and layout.
+  </Tab>
+  <Tab title="Main Routes">
+    Key application routes:
+
+    - `/dashboard` - Analytics and business overview
+    - `/calendar` - Booking calendar and scheduling
+    - `/customers` - Customer database and CRM
+    - `/services` - Service catalog management
+    - `/products` - Product inventory
+    - `/team` - Employee management
+    - `/settings` - Business configuration
+    - `/integrations` - Third-party integrations
+  </Tab>
+  <Tab title="Route Details">
+    Routes are organized by feature with co-located components:
+
+    ```
+    _authenticated/_sidepanel/
+    ├── dashboard.jsx
+    ├── calendar/
+    │   ├── index.jsx
+    │   └── -components/       # Calendar-specific components
+    ├── customers/
+    │   ├── _layout.jsx        # Customer section layout
+    │   ├── $customerId/       # Customer detail page
+    │   ├── new.jsx           # Create customer
+    │   └── edit.$id.jsx      # Edit customer
+    └── services/
+        ├── index.jsx
+        ├── new.jsx
+        ├── edit.$id.jsx
+        └── group/            # Group service management
+    ```
+  </Tab>
+</Tabs>
+
+## Core Features
+
+### Dashboard
+
+**Route**: `_authenticated/_sidepanel/dashboard.jsx`
+
+Provides business overview with:
+
+<Steps>
+  <Step title="Key Metrics">
+    StatisticsCard components showing:
+    - Total revenue (with period comparison)
+    - Number of bookings (with growth indicators)
+    - Customer counts and trends
+    - Service performance metrics
+  </Step>
+  <Step title="Revenue Analytics">
+    RevenueChart component powered by Recharts:
+    - Daily, weekly, monthly revenue visualization
+    - Period-over-period comparisons
+    - Interactive charts with filtering
+  </Step>
+  <Step title="Recent Activity">
+    BookingsList component showing:
+    - Upcoming bookings
+    - Recent customer activity
+    - Quick action buttons
+  </Step>
+  <Step title="Inventory Alerts">
+    LowStockProductsAlert component:
+    - Product inventory warnings
+    - Restock notifications
+    - Direct links to product management
+  </Step>
+</Steps>
+
+### Calendar Management
+
+**Route**: `_authenticated/_sidepanel/calendar/index.jsx`
+
+Interactive booking calendar with:
+
+- **Calendar Component** (FullCalendar integration)
+  - Day, week, month, and list views
+  - Drag-and-drop booking management
+  - Color-coded events by service or employee
+  - Time slot blocking and availability management
+
+- **Booking Management**
+  - NewBookingPanel - Create bookings with customer/service selection
+  - CalendarSidePanel - View and edit booking details
+  - RecurSection - Recurring booking configuration
+  - ParticipantManager - Multi-participant bookings
+
+- **Customer Integration**
+  - CustomerSelector - Search and select existing customers
+  - CustomerProfile - Quick customer info view
+  - Inline customer creation
+
+- **Advanced Features**
+  - BlockedTimePanel - Mark unavailable time periods
+  - DragConfirmationModal - Confirm booking time changes
+  - DeleteBookingPopoverContent - Safe booking deletion
+
+### Customer Management
+
+**Routes**: `_authenticated/_sidepanel/customers/`
+
+Complete CRM system:
+
+<CardGroup cols={2}>
+  <Card title="Customer List" icon="table">
+    CustomersTable with AG Grid:
+    - Searchable, sortable customer database
+    - Quick actions (edit, view, blacklist)
+    - Booking history indicators (BookingRing)
+    - Bulk operations
+  </Card>
+  <Card title="Customer Details" icon="user">
+    Individual customer view (`$customerId/index.jsx`):
+    - Complete booking history
+    - Customer statistics (CustomerStats)
+    - Revenue and visit analytics (BookingDonutChart)
+    - Notes and preferences (ExpandableNote)
+  </Card>
+  <Card title="Customer Forms" icon="edit">
+    Create and edit customers:
+    - `new.jsx` - New customer form
+    - `edit.$id.jsx` - Edit existing customer
+    - Form validation and autofill
+  </Card>
+  <Card title="Special Functions" icon="shield">
+    Customer management tools:
+    - BlacklistModal - Manage restricted customers
+    - TransferAppsModal - Move bookings between customers
+    - Blacklist view (`_layout/blacklist.jsx`)
+  </Card>
+</CardGroup>
+
+### Service Management
+
+**Routes**: `_authenticated/_sidepanel/services/`
+
+Service catalog and configuration:
+
+- **Service Listing** (`index.jsx`)
+  - ServiceCategoryCard - Organized by category
+  - ServiceCard - Individual service display
+  - Quick edit and reorder
+
+- **Service Creation/Editing**
+  - `new.jsx` / `edit.$id.jsx` - Standard services
+  - ServicePage component with:
+    - ServicePhases - Multi-phase service configuration
+    - ServiceSchedulingSettings - Booking rules and duration
+    - ProductAdder - Link products to services
+
+- **Group Services** (`group/`)
+  - GroupServicePage - Configure group bookings
+  - Capacity and participant management
+  - Special pricing rules
+
+- **Category Management**
+  - AddServiceCategoryModal - Create categories
+  - EditServiceCategoryModal - Edit categories
+  - Drag-and-drop reordering
+
+### Team Management
+
+**Routes**: `_authenticated/_sidepanel/team/`
+
+Employee scheduling and management:
+
+- **Employee Directory** (`index.jsx`)
+  - EmployeeTable - Staff listing with AG Grid
+  - Role and permission indicators
+  - Quick access to schedules
+
+- **Employee Details** (`$id.jsx`)
+  - EmployeePage component
+  - Schedule and availability
+  - Performance metrics
+  - Service assignments
+
+- **Employee Forms**
+  - `new.jsx` - Add new team member
+  - `edit.$id.jsx` - Edit employee details
+  - Permission and service assignment
+
+### Business Settings
+
+**Route**: `_authenticated/_sidepanel/settings.jsx`
+
+Comprehensive business configuration with tabbed sections:
+
+<Tabs>
+  <Tab title="Merchant Info">
+    `_pages/merchant.jsx`:
+    - Business name and branding (MerchantNameModal)
+    - Logo and image upload (ImageUploader)
+    - Location management with Mapbox integration
+    - Contact information
+  </Tab>
+  <Tab title="Scheduling">
+    `_pages/scheduling.jsx`:
+    - BusinessHours configuration
+    - SchedulingSettings component
+    - Booking rules and buffer times
+    - BlockedTypesModal for unavailable periods
+  </Tab>
+  <Tab title="Calendar">
+    `_pages/calendar.jsx`:
+    - Calendar view preferences
+    - Time slot configuration
+    - Display options
+  </Tab>
+  <Tab title="Profile">
+    `_pages/profile.jsx`:
+    - User account settings
+    - Password management
+    - Notification preferences
+  </Tab>
+  <Tab title="Billing">
+    `_pages/billing.jsx`:
+    - Subscription management
+    - Payment methods
+    - Invoice history
+  </Tab>
+</Tabs>
+
+**Additional Settings Features**:
+- SettingsNavigation - Tabbed navigation component
+- DangerZone - Critical actions (account deletion, etc.)
+- RadioInputGroup - Settings option selector
+
+### Product Inventory
+
+**Route**: `_authenticated/_sidepanel/products/index.jsx`
+
+Manage retail products and inventory:
+
+- **ProductsTable** - AG Grid with product listing
+- **ProductModal** - Create/edit products
+- Stock level tracking
+- Integration with LowStockProductsAlert on dashboard
+
+### Integrations
+
+**Route**: `_authenticated/_sidepanel/integrations/index.jsx`
+
+Third-party service connections and API integrations.
+
+## Onboarding Flow
+
+**Route**: `_authenticated/signup/`
+
+New merchant setup process:
+
+<Steps>
+  <Step title="Business Information">
+    MerchantInfoForm component:
+    - Business name and type
+    - Industry selection
+    - Initial configuration
+  </Step>
+  <Step title="Location Setup">
+    LocationPicker component:
+    - Address entry with Mapbox search
+    - Map-based location selection
+    - Service area configuration
+  </Step>
+  <Step title="Initial Setup">
+    Guide merchants through:
+    - First service creation
+    - Business hours configuration
+    - Team member addition (optional)
+  </Step>
+</Steps>
+
+## Key Components
+
+Shared components used throughout Jabulani:
+
+### Dashboard Components
+- **StatisticsCard** - Metric display with change indicators
+- **StatisticsChangeIndicator** - Period-over-period comparison
+- **RevenueChart** - Recharts-based revenue visualization
+- **BookingsList** - Upcoming bookings preview
+- **LowStockProductsAlert** - Inventory warnings
+
+### Calendar Components
+- **Calendar** - FullCalendar integration
+- **CalendarModal** - Booking detail modal
+- **CalendarSidePanel** - Booking information sidebar
+- **NewBookingPanel** - Create booking interface
+- **BlockedTimePanel** - Unavailability management
+- **DragConfirmationModal** - Confirm booking changes
+
+### Form Components
+- **CustomerSelector** - Customer search and selection
+- **ServiceSelector** - Service picker
+- **ParticipantManager** - Multi-participant handling
+- **RecurSection** - Recurring booking settings
+
+### Data Components
+- **CustomersTable** / **EmployeeTable** / **ProductsTable** - AG Grid tables
+- **TableActions** - Row action buttons
+- **BookingDonutChart** - Customer analytics
+- **CustomerStats** - Customer metrics
+
+## Development
+
+### Running Jabulani
+
+```bash
+# Start development server on port 5173
+npm run dev-jabulani
+
+# Build for production
+npm run build-jabulani
+```
+
+### Development Features
+
+- Hot module replacement (HMR)
+- API proxy to backend at `/api`
+- Local domain support (`.reservations.local`)
+- React DevTools integration
+- TanStack Query DevTools
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Frontend Overview" icon="code" href="/frontend/overview">
+    Learn about the frontend monorepo architecture
+  </Card>
+  <Card title="Tango Booking" icon="calendar" href="/frontend/tango">
+    Explore the customer-facing booking interface
+  </Card>
+</CardGroup>

@@ -1,0 +1,146 @@
+---
+title: Merchant Dashboard
+description: Real-time insights into your business performance with revenue tracking, booking statistics, and actionable alerts
+---
+
+The merchant dashboard is your central command center, providing at-a-glance visibility into your business metrics and upcoming activities.
+
+## Overview
+
+Access comprehensive business analytics and stay informed about your daily operations. The dashboard automatically refreshes to show you the most relevant data for managing your reservation business.
+
+<img src="/images/dashboard-overview.png" alt="Dashboard Overview" />
+
+## Key Metrics
+
+Track essential business indicators over customizable time periods:
+
+<CardGroup cols={2}>
+  <Card title="Revenue Tracking" icon="dollar-sign">
+    Monitor total earnings from completed bookings with percentage change indicators showing growth trends.
+  </Card>
+  
+  <Card title="Booking Count" icon="calendar-check">
+    View the total number of completed bookings and track how this compares to previous periods.
+  </Card>
+  
+  <Card title="Cancellation Rate" icon="ban">
+    Keep tabs on customer cancellations to identify potential issues or trends.
+  </Card>
+  
+  <Card title="Average Duration" icon="clock">
+    Understand typical service lengths to optimize your scheduling and capacity planning.
+  </Card>
+</CardGroup>
+
+## Time Period Selection
+
+Analyze your performance over different timeframes:
+
+- **Last 7 days**: Quick view of recent activity
+- **Last 30 days**: Monthly performance overview
+
+All metrics automatically update when you switch between time periods, including the revenue chart and percentage change indicators.
+
+## Revenue Chart
+
+<img src="/images/revenue-chart.png" alt="Revenue Chart" />
+
+Visualize your revenue trends with an interactive area chart that displays:
+
+- Daily revenue breakdown
+- Hover tooltips showing exact amounts for each day
+- Trend visualization to spot growth patterns
+- Automatic date formatting based on the selected period
+
+## Upcoming Bookings
+
+<Accordion title="View upcoming appointments">
+  Stay ahead of your schedule with a dedicated section showing:
+  
+  - Customer name (or "Walk-in" for anonymous bookings)
+  - Service name with color-coded badges
+  - Date and time details
+  - Quick actions: View in calendar, cancel, or mark as complete
+  - Customer notes (expandable when available)
+  
+  Click any booking to view full details or manage the appointment directly from the dashboard.
+</Accordion>
+
+## Latest Bookings
+
+Review recently created bookings to track incoming appointments. This list includes the same details and actions as upcoming bookings, giving you visibility into your booking pipeline.
+
+## Low Stock Alerts
+
+<Warning>
+  The dashboard automatically alerts you when product inventory falls below optimal levels.
+</Warning>
+
+When products used in your services run low, you'll see:
+
+- Product name and current stock level
+- Visual indicator of how many items remain
+- Quick link to the products page to restock
+
+This helps prevent service disruptions and ensures you're always prepared for customer appointments.
+
+## Empty States
+
+<Info>
+  When you're just getting started, the dashboard displays helpful empty states guiding you to create your first bookings.
+</Info>
+
+## Dashboard Actions
+
+Perform quick actions directly from the dashboard:
+
+<Tabs>
+  <Tab title="Cancel Booking">
+    Click the trash icon next to any booking to open the cancellation dialog. You can provide a cancellation reason that will be stored with the booking record.
+  </Tab>
+  
+  <Tab title="View in Calendar">
+    Click the calendar icon to jump directly to that booking's date in the full calendar view.
+  </Tab>
+  
+  <Tab title="Mark Complete">
+    Click the checkmark icon to confirm a booking has been completed (coming soon).
+  </Tab>
+</Tabs>
+
+## Responsive Design
+
+The dashboard automatically adapts to your screen size:
+
+- **Mobile**: Shows 2 key metrics (Revenue and Bookings)
+- **Tablet**: Displays 3 metrics
+- **Desktop**: Shows all 4 metrics for complete visibility
+
+## Performance Tips
+
+<CardGroup cols={2}>
+  <Card title="Regular Monitoring" icon="chart-line">
+    Check your dashboard daily to spot trends early and make informed business decisions.
+  </Card>
+  
+  <Card title="Compare Periods" icon="arrows-left-right">
+    Switch between 7-day and 30-day views to understand both short-term fluctuations and longer-term trends.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Calendar" icon="calendar" href="/features/calendar-scheduling">
+    Manage your full schedule
+  </Card>
+  
+  <Card title="Bookings" icon="book-open" href="/features/booking-management">
+    Create and edit appointments
+  </Card>
+  
+  <Card title="Products" icon="box" href="/features/product-catalog">
+    Restock inventory
+  </Card>
+</CardGroup>
