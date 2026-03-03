@@ -1,0 +1,132 @@
+{
+  "projectType": "saas",
+  "projectName": "Reservations",
+  "projectDescription": "A full-stack reservation and booking management platform for merchants with customer-facing booking interfaces",
+  "theme": "maple",
+  "primaryColor": "#2563eb",
+  "lightColor": "#3b82f6",
+  "darkColor": "#1e40af",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "architecture"
+            ]
+          },
+          {
+            "group": "Setup & Deployment",
+            "pages": [
+              "setup/installation",
+              "setup/environment",
+              "setup/database",
+              "setup/building"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/merchant-dashboard",
+              "features/booking-management",
+              "features/customer-management",
+              "features/calendar-scheduling",
+              "features/product-catalog",
+              "features/integrations"
+            ]
+          },
+          {
+            "group": "Backend",
+            "pages": [
+              "backend/overview",
+              "backend/domain-models",
+              "backend/services",
+              "backend/repositories"
+            ]
+          },
+          {
+            "group": "Frontend",
+            "pages": [
+              "frontend/overview",
+              "frontend/jabulani",
+              "frontend/tango"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Merchant API",
+            "pages": [
+              "api/merchant/overview",
+              "api/merchant/settings",
+              "api/merchant/locations",
+              "api/merchant/services",
+              "api/merchant/products",
+              "api/merchant/team",
+              "api/merchant/customers",
+              "api/merchant/blocked-times",
+              "api/merchant/integrations"
+            ]
+          },
+          {
+            "group": "Booking API",
+            "pages": [
+              "api/bookings/overview",
+              "api/bookings/create",
+              "api/bookings/manage"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/overview",
+              "api/auth/jwt",
+              "api/auth/oauth"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-tenant merchant management system",
+    "Customer-facing booking interface",
+    "Calendar and scheduling with recurring events",
+    "Service and product catalog management",
+    "Team and location management",
+    "External calendar integrations (Google)",
+    "OAuth authentication (Google, Facebook)",
+    "Email notifications with Resend",
+    "Multi-currency support",
+    "Dashboard with analytics and revenue stats",
+    "Customer profiles and booking history",
+    "Blocked times and availability management"
+  ],
+  "publicApiSurface": [
+    "/api/auth - Authentication endpoints",
+    "/api/bookings - Booking management",
+    "/api/merchant - Merchant management",
+    "/api/merchant/locations - Location management",
+    "/api/merchant/services - Service catalog",
+    "/api/merchant/products - Product catalog",
+    "/api/merchant/team - Team member management",
+    "/api/merchant/customers - Customer management",
+    "/api/merchant/blockedtimes - Availability blocking",
+    "/api/merchant/integrations - External integrations",
+    "/api/merchants - Merchant discovery"
+  ]
+}
